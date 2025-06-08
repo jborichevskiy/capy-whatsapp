@@ -2,7 +2,8 @@ import makeWASocket, {
   useMultiFileAuthState, 
   ConnectionState, 
   DisconnectReason,
-  WASocket
+  WASocket,
+  makeCacheableSignalKeyStore
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import * as qrcode from "qrcode-terminal";

@@ -32,6 +32,6 @@ export interface DatabaseOperations {
   insertRecurringMessage: (message: Omit<RecurringMessage, 'id' | 'lastSent'>) => number;
   getScheduledMessages: (before: Date) => ScheduledMessage[];
   getRecurringMessages: (weekday: number, hour: number, minute: number) => RecurringMessage[];
-  deleteScheduledMessage: (id: number) => void;
+  deleteScheduledMessage: (id: number) => { changes: number };
   updateRecurringMessageLastSent: (id: number, timestamp: string) => void;
 } 

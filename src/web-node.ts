@@ -15,6 +15,94 @@ let botState = {
 
 let sock: any = null;
 
+// Function to fetch and update groups
+async function updateGroups() {
+  if (!sock || !botState.connected) {
+    console.log("❌ Bot not connected, cannot fetch groups");
+    return;
+  }
+
+  try {
+    console.log("🔄 Fetching groups using Baileys methods...");
+    
+    // Method 1: Use groupFetchAllParticipating() to get all groups
+    let groups = [];
+    
+    try {
+      console.log("📋 Trying groupFetchAllParticipating()...");
+      const groupsParticipating = await sock.groupFetchAllParticipating();
+      console.log(`📊 Found ${Object.keys(groupsParticipating).length} groups via groupFetchAllParticipating`);
+      
+             for (const [groupId, groupInfo] of Object.entries(groupsParticipating)) {
+         const group = groupInfo as any; // Type assertion for groupInfo
+         try {
+           // Get additional metadata for each group
+           const groupMetadata = await sock.groupMetadata(groupId);
+           groups.push({
+             id: groupId,
+             name: groupMetadata.subject || group.subject || 'Unknown Group',
+             participantCount: groupMetadata.participants?.length || 0,
+             description: groupMetadata.desc || '',
+             owner: groupMetadata.owner || '',
+             creation: groupMetadata.creation || null
+           });
+           console.log(`✅ Added group: ${groupMetadata.subject || group.subject} (${groupMetadata.participants?.length || 0} members)`);
+         } catch (metadataError) {
+           // Fallback to basic group info
+           console.warn(`⚠️ Could not fetch metadata for group ${groupId}:`, metadataError instanceof Error ? metadataError.message : String(metadataError));
+           groups.push({
+             id: groupId,
+             name: group.subject || 'Unknown Group',
+             participantCount: group.participants?.length || 0,
+             description: '',
+             owner: group.owner || '',
+             creation: group.creation || null
+           });
+           console.log(`⚠️ Added group (basic info): ${group.subject || 'Unknown Group'}`);
+         }
+       }
+    } catch (participatingError) {
+      console.log("❌ groupFetchAllParticipating failed:", participatingError instanceof Error ? participatingError.message : String(participatingError));
+      
+      // Method 2: Fallback - try to get groups from chat history
+      try {
+        console.log("📋 Trying alternative method - searching chat history...");
+        
+        // This is a more manual approach - we'll look for groups in recent chats
+        const chatHistoryGroups: any[] = [];
+        
+        // Note: This is a fallback method. In a real implementation, you might want to
+        // maintain your own group registry or use the store properly
+        console.log("ℹ️ Alternative method would require implementing custom group tracking");
+        console.log("ℹ️ For now, will return empty groups list");
+        
+      } catch (fallbackError) {
+        console.log("❌ Fallback method also failed:", fallbackError instanceof Error ? fallbackError.message : String(fallbackError));
+      }
+    }
+    
+    // Sort groups by name for better organization
+    groups.sort((a, b) => a.name.localeCompare(b.name));
+    
+    botState.groups = groups;
+    console.log(`✅ Updated ${groups.length} groups total`);
+    
+    // Log group details for debugging
+    if (groups.length > 0) {
+      console.log("📋 Groups found:");
+      groups.forEach(group => {
+        console.log(`  - ${group.name} (${group.id}) - ${group.participantCount} members`);
+      });
+    }
+    
+  } catch (error) {
+    console.error("❌ Failed to fetch groups:", error);
+    if (error instanceof Error) {
+      console.error("Stack trace:", error.stack);
+    }
+  }
+}
+
 // Start the bot
 async function initializeBot() {
   try {
@@ -25,12 +113,15 @@ async function initializeBot() {
     setupScheduler(sock);
     
     // Listen for connection updates
-    sock.ev.on("connection.update", (update: any) => {
+    sock.ev.on("connection.update", async (update: any) => {
       const { connection } = update;
       botState.connected = connection === "open";
       if (botState.connected) {
         botState.lastConnectionTime = new Date();
         console.log("✅ WhatsApp connected for web UI");
+        
+        // Fetch groups after connection is established
+        setTimeout(updateGroups, 2000); // Wait 2 seconds for everything to initialize
       }
     });
 
@@ -41,13 +132,40 @@ async function initializeBot() {
       }
     });
 
-    // Track groups
-    sock.ev.on("chats.set", (chats: any) => {
-      botState.groups = chats.filter((chat: any) => chat.id.includes('@g.us')).map((group: any) => ({
+    // Track groups from initial chat set
+    sock.ev.on("chats.set", async (chats: any) => {
+      const groups = chats.filter((chat: any) => chat.id.includes('@g.us')).map((group: any) => ({
         id: group.id,
         name: group.name || 'Unknown Group',
-        participantCount: group.participants?.length || 0
+        participantCount: group.participants?.length || 0,
+        description: group.desc || '',
+        owner: group.owner || '',
+        creation: group.creation || null
       }));
+      
+      botState.groups = groups;
+      console.log(`📊 Initial groups loaded: ${groups.length}`);
+      
+      // Also fetch detailed metadata after initial load
+      setTimeout(updateGroups, 1000);
+    });
+
+    // Listen for new groups being added or updated
+    sock.ev.on("chats.upsert", async (chats: any) => {
+      const newGroups = chats.filter((chat: any) => chat.id.includes('@g.us'));
+      if (newGroups.length > 0) {
+        console.log(`📊 New groups detected: ${newGroups.length}`);
+        await updateGroups(); // Refresh all groups when new ones are added
+      }
+    });
+
+    // Listen for group updates
+    sock.ev.on("chats.update", async (chats: any) => {
+      const updatedGroups = chats.filter((chat: any) => chat.id.includes('@g.us'));
+      if (updatedGroups.length > 0) {
+        console.log(`📊 Groups updated: ${updatedGroups.length}`);
+        await updateGroups(); // Refresh all groups when they're updated
+      }
     });
 
   } catch (error) {
@@ -120,12 +238,15 @@ const dashboardHTML = `
             border-bottom: 1px solid #eee;
             display: flex;
             justify-content: space-between;
+            align-items: flex-start;
+        }
+        .group-item {
             align-items: center;
         }
         .message-item:last-child, .group-item:last-child { border-bottom: none; }
         .message-text { flex: 1; margin-right: 15px; }
         .message-time { color: #666; font-size: 0.9em; }
-        .refresh-btn {
+        .refresh-btn, .btn {
             background: #25D366;
             color: white;
             border: none;
@@ -133,9 +254,66 @@ const dashboardHTML = `
             border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
+            margin: 5px;
         }
-        .refresh-btn:hover { background: #128C7E; }
+        .refresh-btn:hover, .btn:hover { background: #128C7E; }
+        .btn-danger {
+            background: #ff4444;
+        }
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .add-form {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
         .empty { color: #666; font-style: italic; text-align: center; padding: 40px; }
+        .message-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 </head>
 <body>
@@ -169,8 +347,33 @@ const dashboardHTML = `
                 📅 Scheduled Messages
                 <button class="refresh-btn" onclick="refreshData()">Refresh</button>
             </div>
-            <div class="section-content" id="scheduledMessages">
-                Loading...
+            <div class="section-content">
+                <div id="statusMessage" class="status-message"></div>
+                
+                <div class="add-form">
+                    <h4>📝 Add New Scheduled Message</h4>
+                    <form id="scheduleForm" onsubmit="addScheduledMessage(event)">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="chatId">Chat ID (phone number with @s.whatsapp.net or group ID):</label>
+                                <input type="text" id="chatId" name="chatId" placeholder="1234567890@s.whatsapp.net" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="datetime">Date & Time:</label>
+                                <input type="datetime-local" id="datetime" name="datetime" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="text">Message:</label>
+                            <textarea id="text" name="text" placeholder="Enter your message here..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn">📤 Schedule Message</button>
+                    </form>
+                </div>
+                
+                <div id="scheduledMessages">
+                    Loading...
+                </div>
             </div>
         </div>
 
@@ -186,6 +389,7 @@ const dashboardHTML = `
         <div class="section">
             <div class="section-header">
                 👥 Groups
+                <button class="refresh-btn" onclick="refreshGroups()">🔄 Refresh Groups</button>
             </div>
             <div class="section-content" id="groups">
                 Loading...
@@ -229,7 +433,10 @@ const dashboardHTML = `
                             <strong>\${msg.chatId}</strong><br>
                             \${msg.text}
                         </div>
-                        <div class="message-time">\${new Date(msg.datetime).toLocaleString()}</div>
+                        <div class="message-actions">
+                            <div class="message-time">\${new Date(msg.datetime).toLocaleString()}</div>
+                            <button class="btn btn-danger" onclick="deleteScheduledMessage(\${msg.id})">🗑️ Delete</button>
+                        </div>
                     </div>\`
                 ).join('');
             }
@@ -254,15 +461,22 @@ const dashboardHTML = `
             // Update groups
             const groupsDiv = document.getElementById('groups');
             if (data.groups.length === 0) {
-                groupsDiv.innerHTML = '<div class="empty">No groups found</div>';
+                groupsDiv.innerHTML = '<div class="empty">No groups found. Try refreshing groups or check your WhatsApp connection.</div>';
             } else {
                 groupsDiv.innerHTML = data.groups.map(group => 
                     \`<div class="group-item">
                         <div class="message-text">
                             <strong>\${group.name}</strong><br>
-                            <small>\${group.id}</small>
+                            <small style="color: #666;">\${group.id}</small>
+                            \${group.description ? \`<br><em style="color: #888; font-size: 0.9em;">\${group.description.length > 100 ? group.description.substring(0, 100) + '...' : group.description}</em>\` : ''}
                         </div>
-                        <div class="message-time">\${group.participantCount} members</div>
+                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                            <div class="message-time">
+                                👥 \${group.participantCount} members
+                                \${group.creation ? \`<br><small>Created: \${new Date(group.creation * 1000).toLocaleDateString()}</small>\` : ''}
+                            </div>
+                            <button class="btn" style="font-size: 12px; padding: 5px 10px;" onclick="copyGroupId('\${group.id}')">📋 Copy ID</button>
+                        </div>
                     </div>\`
                 ).join('');
             }
@@ -272,6 +486,127 @@ const dashboardHTML = `
             fetchData();
         }
 
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = \`status-message \${isError ? 'status-error' : 'status-success'}\`;
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
+        }
+
+        async function addScheduledMessage(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = {
+                chatId: formData.get('chatId'),
+                text: formData.get('text'),
+                datetime: formData.get('datetime')
+            };
+
+            try {
+                const response = await fetch('/api/schedule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Message scheduled successfully!');
+                    event.target.reset();
+                    fetchData(); // Refresh the list
+                } else {
+                    const error = await response.text();
+                    showStatus(\`❌ Failed to schedule message: \${error}\`, true);
+                }
+            } catch (error) {
+                showStatus(\`❌ Error: \${error.message}\`, true);
+            }
+        }
+
+        async function deleteScheduledMessage(id) {
+            if (!confirm('Are you sure you want to delete this scheduled message?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(\`/api/schedule/\${id}\`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showStatus('✅ Message deleted successfully!');
+                    fetchData(); // Refresh the list
+                } else {
+                    const error = await response.text();
+                    showStatus(\`❌ Failed to delete message: \${error}\`, true);
+                }
+            } catch (error) {
+                showStatus(\`❌ Error: \${error.message}\`, true);
+            }
+        }
+
+        async function refreshGroups() {
+            try {
+                showStatus('🔄 Refreshing groups...', false);
+                
+                const response = await fetch('/api/refresh-groups', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showStatus(\`✅ \${result.message}\`, false);
+                    fetchData(); // Refresh the entire UI to show updated groups
+                } else {
+                    const error = await response.text();
+                    showStatus(\`❌ Failed to refresh groups: \${error}\`, true);
+                }
+            } catch (error) {
+                showStatus(\`❌ Error refreshing groups: \${error.message}\`, true);
+            }
+        }
+
+        function copyGroupId(groupId) {
+            // Copy to clipboard
+            navigator.clipboard.writeText(groupId).then(() => {
+                showStatus(\`📋 Group ID copied to clipboard: \${groupId}\`, false);
+                
+                // Also populate the chat ID field in the scheduling form
+                const chatIdInput = document.getElementById('chatId');
+                if (chatIdInput) {
+                    chatIdInput.value = groupId;
+                    chatIdInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    chatIdInput.focus();
+                }
+            }).catch(err => {
+                console.error('Failed to copy group ID:', err);
+                showStatus('❌ Failed to copy group ID to clipboard', true);
+                
+                // Fallback: still populate the form field
+                const chatIdInput = document.getElementById('chatId');
+                if (chatIdInput) {
+                    chatIdInput.value = groupId;
+                    chatIdInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    chatIdInput.focus();
+                    showStatus('📝 Group ID added to message form', false);
+                }
+            });
+        }
+
+        // Set default datetime to 1 hour from now
+        document.addEventListener('DOMContentLoaded', () => {
+            const datetimeInput = document.getElementById('datetime');
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            datetimeInput.value = now.toISOString().slice(0, 16);
+        });
+
         // Initial load and auto-refresh
         fetchData();
         setInterval(fetchData, 5000); // Refresh every 5 seconds
@@ -280,7 +615,7 @@ const dashboardHTML = `
 </html>`;
 
 // Node.js HTTP server
-const server = createServer((req, res) => {
+const server = createServer(async (req, res) => {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -319,6 +654,74 @@ const server = createServer((req, res) => {
 
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(data));
+    return;
+  }
+
+  if (url.pathname === '/api/schedule' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        const { chatId, text, datetime } = JSON.parse(body);
+        
+        if (!chatId || !text || !datetime) {
+          res.writeHead(400, { 'Content-Type': 'text/plain' });
+          res.end('Missing required fields: chatId, text, datetime');
+          return;
+        }
+
+        // Insert into database
+        const id = dbOps.insertScheduledMessage({ chatId, text, datetime });
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, id }));
+      } catch (error) {
+        console.error('Error adding scheduled message:', error);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal server error');
+      }
+    });
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/schedule/') && req.method === 'DELETE') {
+    const id = url.pathname.split('/')[3];
+    
+    try {
+      const result = dbOps.deleteScheduledMessage(parseInt(id));
+      
+      if (result.changes > 0) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Message not found');
+      }
+    } catch (error) {
+      console.error('Error deleting scheduled message:', error);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Internal server error');
+    }
+    return;
+  }
+
+  if (url.pathname === '/api/refresh-groups' && req.method === 'POST') {
+    try {
+      await updateGroups();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        groupCount: botState.groups.length,
+        message: `Successfully refreshed ${botState.groups.length} groups`
+      }));
+    } catch (error) {
+      console.error('Error refreshing groups:', error);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Failed to refresh groups');
+    }
     return;
   }
 

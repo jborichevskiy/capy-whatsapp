@@ -1,25 +1,38 @@
 {
   "name": "whatsapp-bot-mvp",
   "version": "1.0.0",
-  "description": "Self-hosted WhatsApp bot with scheduling capabilities",
-  "main": "src/index.ts",
+  "description": "Self-hosted WhatsApp bot with scheduling capabilities and web dashboard",
+  "main": "src/web-node.ts",
   "scripts": {
-    "start": "ts-node --transpile-only src/index.ts",
-    "dev": "ts-node --transpile-only --watch src/index.ts",
+    "start": "node --experimental-global-webcrypto node_modules/.bin/tsx src/web-node.ts",
+    "dev": "node --experimental-global-webcrypto node_modules/.bin/tsx --watch src/web-node.ts",
+    "bot-only": "tsx src/index.ts",
+    "bot-only:dev": "tsx --watch src/index.ts",
+    "web": "tsx src/web-node.ts",
+    "web:dev": "tsx --watch src/web-node.ts",
     "build": "tsc",
-    "bun:start": "bun run src/index.ts",
-    "bun:web": "bun run src/web.ts",
-    "web": "ts-node --transpile-only src/web-node.ts",
-    "test-util": "ts-node --transpile-only src/test.ts"
+    "build:watch": "tsc --watch",
+    "test-schedule": "tsx src/test.ts",
+    "bun:start": "bun run src/web.ts",
+    "bun:bot": "bun run src/index.ts",
+    "clean": "rm -rf dist auth bot.sqlite",
+    "typecheck": "tsc --noEmit"
   },
-  "keywords": ["whatsapp", "bot", "scheduler", "baileys"],
+  "keywords": [
+    "whatsapp",
+    "bot", 
+    "scheduler",
+    "baileys",
+    "automation",
+    "messaging"
+  ],
   "author": "Jonathan Borichevskiy",
   "license": "MIT",
   "dependencies": {
+    "@hapi/boom": "^10.0.1",
     "@whiskeysockets/baileys": "^6.7.8",
     "better-sqlite3": "^9.6.0",
     "node-cron": "^3.0.3",
-    "@hapi/boom": "^10.0.1",
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
@@ -27,12 +40,20 @@
     "@types/node": "^20.14.10",
     "@types/node-cron": "^3.0.11",
     "@types/qrcode-terminal": "^0.12.0",
-    "@types/bun": "^1.0.0",
     "typescript": "^5.5.3",
-    "ts-node": "^10.9.2",
     "tsx": "^4.7.0"
   },
   "engines": {
-    "node": ">=18.0.0"
-  }
+    "node": ">=20.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonbo/whatsapp-bot-mvp"
+  },
+  "files": [
+    "src/**/*",
+    "dist/**/*",
+    "README.md",
+    "tsconfig.json"
+  ]
 } 

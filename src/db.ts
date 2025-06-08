@@ -77,8 +77,9 @@ export const dbOps: DatabaseOperations = {
     return getRecurringStmt.all(weekday, hour, minute, today) as RecurringMessage[];
   },
 
-  deleteScheduledMessage: (id: number): void => {
-    deleteScheduledStmt.run(id);
+  deleteScheduledMessage: (id: number): { changes: number } => {
+    const result = deleteScheduledStmt.run(id);
+    return { changes: result.changes };
   },
 
   updateRecurringMessageLastSent: (id: number, timestamp: string): void => {
