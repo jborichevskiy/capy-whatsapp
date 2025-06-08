@@ -366,7 +366,7 @@ const dashboardHTML = `
         }
         .time-inputs {
             display: grid;
-            grid-template-columns: 1fr auto 1fr;
+            grid-template-columns: 1fr auto 1fr 1fr;
             gap: 4px;
             align-items: center;
         }
@@ -434,7 +434,7 @@ const dashboardHTML = `
                                         <input type="date" id="scheduleDate" name="scheduleDate" required>
                                     </div>
                                     <div class="form-group">
-                                        <label>TIME:</label>
+                                        <label>TIME (MT):</label>
                                         <input type="time" id="scheduleTime" name="scheduleTime" required>
                                     </div>
                                 </div>
@@ -533,6 +533,12 @@ const dashboardHTML = `
             return group ? group.name : chatId;
         }
 
+        function formatTime12Hour(hour24, minute) {
+            const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+            const ampm = hour24 < 12 ? 'AM' : 'PM';
+            return \`\${hour12}:\${String(minute).padStart(2, '0')} \${ampm}\`;
+        }
+
         function updateUI(data) {
             // Update status
             document.getElementById('connectionStatus').innerHTML = 
@@ -606,7 +612,7 @@ const dashboardHTML = `
                         </div>
                         <div class="message-meta">
                             \${weekdayText}<br>
-                            \${String(group.hour).padStart(2, '0')}:\${String(group.minute).padStart(2, '0')}<br>
+                            \${formatTime12Hour(group.hour, group.minute)}<br>
                             <button class="btn btn-danger" onclick="deleteRecurringMessageGroup('\${idsParam}')">DEL</button>
                         </div>
                     </div>\`;
@@ -732,13 +738,24 @@ const dashboardHTML = `
             
             const formData = new FormData(event.target);
             
+            // Convert 12-hour format to 24-hour format
+            const hour12 = parseInt(formData.get('hour'));
+            const ampm = formData.get('ampm');
+            let hour24;
+            
+            if (ampm === 'AM') {
+                hour24 = hour12 === 12 ? 0 : hour12;
+            } else {
+                hour24 = hour12 === 12 ? 12 : hour12 + 12;
+            }
+            
             // Add recurring message for each selected weekday
             const promises = selectedWeekdays.map(async (weekday) => {
                 const data = {
                     chatId: formData.get('chatId'),
                     text: formData.get('text'),
                     weekday: weekday,
-                    hour: parseInt(formData.get('hour')),
+                    hour: hour24,
                     minute: parseInt(formData.get('minute'))
                 };
 
