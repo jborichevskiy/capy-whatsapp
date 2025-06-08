@@ -184,258 +184,386 @@ const dashboardHTML = `
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
+            font-family: 'Courier New', monospace;
+            background: #ffffff;
+            color: #000000;
+            line-height: 1.4;
+            height: 100vh;
+            overflow: hidden;
         }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .container { 
+            max-width: 100vw; 
+            height: 100vh;
+            padding: 10px;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 10px;
+        }
         .header { 
-            background: linear-gradient(135deg, #25D366, #128C7E);
-            color: white;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
+            background: #000000;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: 2px solid #000000;
             text-align: center;
+            font-weight: bold;
+        }
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            height: 100%;
+            overflow: hidden;
+        }
+        .column {
+            border: 2px solid #000000;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .column-header {
+            background: #000000;
+            color: #ffffff;
+            padding: 8px 12px;
+            font-weight: bold;
+            font-size: 14px;
+            border-bottom: 2px solid #000000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .column-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
         }
         .status-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
         }
-        .status-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .status-item {
+            padding: 6px;
+            border: 1px solid #000000;
+            font-size: 12px;
         }
-        .status-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 8px;
+        .status-label { font-weight: bold; }
+        .connected::before { content: "●"; color: #000000; margin-right: 4px; }
+        .disconnected::before { content: "○"; color: #000000; margin-right: 4px; }
+        
+        .form-section {
+            border: 1px solid #000000;
+            margin-bottom: 10px;
         }
-        .connected { background: #25D366; }
-        .disconnected { background: #ff4444; }
-        .section {
-            background: white;
-            margin-bottom: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        .form-header {
+            background: #000000;
+            color: #ffffff;
+            padding: 6px 8px;
+            font-size: 12px;
+            font-weight: bold;
         }
-        .section-header {
-            background: #f8f9fa;
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-            border-radius: 10px 10px 0 0;
-            font-weight: 600;
-        }
-        .section-content { padding: 20px; }
-        .message-item, .group-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-        }
-        .group-item {
-            align-items: center;
-        }
-        .message-item:last-child, .group-item:last-child { border-bottom: none; }
-        .message-text { flex: 1; margin-right: 15px; }
-        .message-time { color: #666; font-size: 0.9em; }
-        .refresh-btn, .btn {
-            background: #25D366;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 5px;
-        }
-        .refresh-btn:hover, .btn:hover { background: #128C7E; }
-        .btn-danger {
-            background: #ff4444;
-        }
-        .btn-danger:hover {
-            background: #cc0000;
+        .form-content {
+            padding: 8px;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 8px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
+            margin-bottom: 3px;
+            font-size: 11px;
+            font-weight: bold;
         }
-        .form-group input, .form-group textarea {
+        .form-group input, .form-group textarea, .form-group select {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
+            padding: 4px;
+            border: 1px solid #000000;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            background: #ffffff;
         }
         .form-group textarea {
-            height: 80px;
-            resize: vertical;
+            height: 50px;
+            resize: none;
         }
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 8px;
         }
-        .add-form {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        .btn {
+            background: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            font-weight: bold;
         }
-        .empty { color: #666; font-style: italic; text-align: center; padding: 40px; }
-        .message-actions {
+        .btn:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+        .btn-danger {
+            background: #ffffff;
+            border-color: #000000;
+        }
+        .btn-danger:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+        .message-item, .group-item {
+            padding: 6px;
+            border-bottom: 1px solid #000000;
+            font-size: 11px;
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .message-item:last-child, .group-item:last-child { border-bottom: none; }
+        .message-text { 
+            flex: 1; 
+            word-break: break-word;
+            line-height: 1.2;
+        }
+        .message-meta { 
+            font-size: 10px; 
+            text-align: right;
+            white-space: nowrap;
+        }
+        .empty { 
+            text-align: center; 
+            padding: 20px; 
+            font-style: italic;
+            font-size: 11px;
         }
         .status-message {
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 15px;
+            padding: 6px;
+            border: 1px solid #000000;
+            margin-bottom: 8px;
             display: none;
+            font-size: 11px;
         }
-        .status-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+        .weekday-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            margin-bottom: 8px;
         }
-        .status-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        .weekday-btn {
+            padding: 3px;
+            border: 1px solid #000000;
+            background: #ffffff;
+            font-size: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .weekday-btn.selected {
+            background: #000000;
+            color: #ffffff;
+        }
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 4px;
+            align-items: center;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🤖 WhatsApp Bot Dashboard</h1>
-            <p>Monitor your bot's activity and manage messages</p>
+            WHATSAPP BOT TERMINAL
         </div>
 
-        <div class="status-grid" id="statusGrid">
-            <div class="status-card">
-                <h3>Connection Status</h3>
-                <p id="connectionStatus">Loading...</p>
-            </div>
-            <div class="status-card">
-                <h3>Phone Number</h3>
-                <p id="phoneNumber">Loading...</p>
-            </div>
-            <div class="status-card">
-                <h3>Last Connected</h3>
-                <p id="lastConnected">Loading...</p>
-            </div>
-            <div class="status-card">
-                <h3>Groups Joined</h3>
-                <p id="groupCount">Loading...</p>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-header">
-                📅 Scheduled Messages
-                <button class="refresh-btn" onclick="refreshData()">Refresh</button>
-            </div>
-            <div class="section-content">
-                <div id="statusMessage" class="status-message"></div>
-                
-                <div class="add-form">
-                    <h4>📝 Add New Scheduled Message</h4>
-                    <form id="scheduleForm" onsubmit="addScheduledMessage(event)">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="chatId">Chat ID (phone number with @s.whatsapp.net or group ID):</label>
-                                <input type="text" id="chatId" name="chatId" placeholder="1234567890@s.whatsapp.net" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="datetime">Date & Time:</label>
-                                <input type="datetime-local" id="datetime" name="datetime" required>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label for="text">Message:</label>
-                            <textarea id="text" name="text" placeholder="Enter your message here..." required></textarea>
-                        </div>
-                        <button type="submit" class="btn">📤 Schedule Message</button>
-                    </form>
+        <div class="main-grid">
+            <!-- Column 1: Status & Groups -->
+            <div class="column">
+                <div class="column-header">
+                    STATUS & GROUPS
+                    <button class="btn" onclick="refreshGroups()">REFRESH</button>
                 </div>
-                
-                <div id="scheduledMessages">
-                    Loading...
+                <div class="column-content">
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <div class="status-label">CONNECTION</div>
+                            <div id="connectionStatus">Loading...</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">PHONE</div>
+                            <div id="phoneNumber">Loading...</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">LAST SEEN</div>
+                            <div id="lastConnected">Loading...</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">GROUPS</div>
+                            <div id="groupCount">Loading...</div>
+                        </div>
+                    </div>
+                    
+                    <div id="groups">Loading...</div>
                 </div>
             </div>
-        </div>
 
-        <div class="section">
-            <div class="section-header">
-                🔄 Recurring Messages
+            <!-- Column 2: Scheduled Messages -->
+            <div class="column">
+                <div class="column-header">
+                    SCHEDULED MESSAGES
+                    <button class="btn" onclick="refreshData()">REFRESH</button>
+                </div>
+                <div class="column-content">
+                    <div id="statusMessage" class="status-message"></div>
+                    
+                    <div class="form-section">
+                        <div class="form-header">ADD SCHEDULED MESSAGE</div>
+                        <div class="form-content">
+                            <form id="scheduleForm" onsubmit="addScheduledMessage(event)">
+                                <div class="form-group">
+                                    <label>GROUP/CHAT:</label>
+                                    <select id="chatId" name="chatId" required>
+                                        <option value="">Select group or enter custom...</option>
+                                    </select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>DATE:</label>
+                                        <input type="date" id="scheduleDate" name="scheduleDate" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>TIME:</label>
+                                        <input type="time" id="scheduleTime" name="scheduleTime" required>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>MESSAGE:</label>
+                                    <textarea id="text" name="text" placeholder="Enter message..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn">SCHEDULE</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div id="scheduledMessages">Loading...</div>
+                </div>
             </div>
-            <div class="section-content" id="recurringMessages">
-                Loading...
-            </div>
-        </div>
 
-        <div class="section">
-            <div class="section-header">
-                👥 Groups
-                <button class="refresh-btn" onclick="refreshGroups()">🔄 Refresh Groups</button>
-            </div>
-            <div class="section-content" id="groups">
-                Loading...
+            <!-- Column 3: Recurring Messages -->
+            <div class="column">
+                <div class="column-header">RECURRING MESSAGES</div>
+                <div class="column-content">
+                    <div class="form-section">
+                        <div class="form-header">ADD RECURRING MESSAGE</div>
+                        <div class="form-content">
+                            <form id="recurringForm" onsubmit="addRecurringMessage(event)">
+                                <div class="form-group">
+                                    <label>GROUP/CHAT:</label>
+                                    <select id="recurringChatId" name="chatId" required>
+                                        <option value="">Select group or enter custom...</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>DAYS:</label>
+                                    <div class="weekday-grid">
+                                        <div class="weekday-btn" data-day="0">SUN</div>
+                                        <div class="weekday-btn" data-day="1">MON</div>
+                                        <div class="weekday-btn" data-day="2">TUE</div>
+                                        <div class="weekday-btn" data-day="3">WED</div>
+                                        <div class="weekday-btn" data-day="4">THU</div>
+                                        <div class="weekday-btn" data-day="5">FRI</div>
+                                        <div class="weekday-btn" data-day="6">SAT</div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>TIME (MT):</label>
+                                    <div class="time-inputs">
+                                        <select id="recurringHour" name="hour" required>
+                                            ${Array.from({length: 12}, (_, i) => {
+                                                const hour = i === 0 ? 12 : i;
+                                                return `<option value="${hour}">${hour}</option>`;
+                                            }).join('')}
+                                        </select>
+                                        <span>:</span>
+                                        <select id="recurringMinute" name="minute" required>
+                                            ${Array.from({length: 60}, (_, i) => 
+                                                `<option value="${i}">${i.toString().padStart(2, '0')}</option>`
+                                            ).join('')}
+                                        </select>
+                                        <select id="recurringAmPm" name="ampm" required>
+                                            <option value="AM">AM</option>
+                                            <option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>MESSAGE:</label>
+                                    <textarea id="recurringText" name="text" placeholder="Enter message..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn">ADD RECURRING</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div id="recurringMessages">Loading...</div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
+        let globalData = null;
+
         async function fetchData() {
             try {
                 const response = await fetch('/api/status');
                 const data = await response.json();
+                globalData = data;
                 updateUI(data);
             } catch (error) {
                 console.error('Failed to fetch data:', error);
             }
         }
 
+        function getGroupName(chatId) {
+            if (!globalData || !globalData.groups) return chatId;
+            const group = globalData.groups.find(g => g.id === chatId);
+            return group ? group.name : chatId;
+        }
+
         function updateUI(data) {
-            // Update status cards
+            // Update status
             document.getElementById('connectionStatus').innerHTML = 
-                \`<span class="status-indicator \${data.connected ? 'connected' : 'disconnected'}"></span>
-                \${data.connected ? 'Connected' : 'Disconnected'}\`;
+                \`<span class="\${data.connected ? 'connected' : 'disconnected'}">\${data.connected ? 'ONLINE' : 'OFFLINE'}</span>\`;
             
             document.getElementById('phoneNumber').textContent = 
-                data.phoneNumber || 'Not available';
+                data.phoneNumber ? data.phoneNumber.split(':')[0] : 'N/A';
             
             document.getElementById('lastConnected').textContent = 
-                data.lastConnectionTime ? new Date(data.lastConnectionTime).toLocaleString() : 'Never';
+                data.lastConnectionTime ? new Date(data.lastConnectionTime).toLocaleString().replace(/[/:]/g, '.').substring(0, 16) : 'NEVER';
             
             document.getElementById('groupCount').textContent = data.groups.length;
+
+            // Update group dropdowns
+            updateGroupDropdowns(data.groups);
 
             // Update scheduled messages
             const scheduledDiv = document.getElementById('scheduledMessages');
             if (data.scheduledMessages.length === 0) {
-                scheduledDiv.innerHTML = '<div class="empty">No scheduled messages</div>';
+                scheduledDiv.innerHTML = '<div class="empty">NO SCHEDULED MESSAGES</div>';
             } else {
                 scheduledDiv.innerHTML = data.scheduledMessages.map(msg => 
                     \`<div class="message-item">
                         <div class="message-text">
-                            <strong>\${msg.chatId}</strong><br>
+                            <strong>\${getGroupName(msg.chatId)}</strong><br>
                             \${msg.text}
                         </div>
-                        <div class="message-actions">
-                            <div class="message-time">\${new Date(msg.datetime).toLocaleString()}</div>
-                            <button class="btn btn-danger" onclick="deleteScheduledMessage(\${msg.id})">🗑️ Delete</button>
+                        <div class="message-meta">
+                            \${new Date(msg.datetime).toLocaleDateString()}<br>
+                            \${new Date(msg.datetime).toLocaleTimeString().substring(0, 5)}<br>
+                            <button class="btn btn-danger" onclick="deleteScheduledMessage(\${msg.id})">DEL</button>
                         </div>
                     </div>\`
                 ).join('');
@@ -444,42 +572,82 @@ const dashboardHTML = `
             // Update recurring messages
             const recurringDiv = document.getElementById('recurringMessages');
             if (data.recurringMessages.length === 0) {
-                recurringDiv.innerHTML = '<div class="empty">No recurring messages</div>';
+                recurringDiv.innerHTML = '<div class="empty">NO RECURRING MESSAGES</div>';
             } else {
-                const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                recurringDiv.innerHTML = data.recurringMessages.map(msg => 
-                    \`<div class="message-item">
+                const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+                
+                // Group messages by chatId, text, hour, and minute
+                const grouped = {};
+                data.recurringMessages.forEach(msg => {
+                    const key = \`\${msg.chatId}|\${msg.text}|\${msg.hour}|\${msg.minute}\`;
+                    if (!grouped[key]) {
+                        grouped[key] = {
+                            chatId: msg.chatId,
+                            text: msg.text,
+                            hour: msg.hour,
+                            minute: msg.minute,
+                            weekdays: [],
+                            ids: []
+                        };
+                    }
+                    grouped[key].weekdays.push(msg.weekday);
+                    grouped[key].ids.push(msg.id);
+                });
+                
+                recurringDiv.innerHTML = Object.values(grouped).map(group => {
+                    const sortedWeekdays = group.weekdays.sort((a, b) => a - b);
+                    const weekdayText = sortedWeekdays.map(day => weekdays[day]).join(', ');
+                    const idsParam = group.ids.join(',');
+                    
+                    return \`<div class="message-item">
                         <div class="message-text">
-                            <strong>\${msg.chatId}</strong><br>
-                            \${msg.text}
+                            <strong>\${getGroupName(group.chatId)}</strong><br>
+                            \${group.text}
                         </div>
-                        <div class="message-time">Every \${weekdays[msg.weekday]} at \${String(msg.hour).padStart(2, '0')}:\${String(msg.minute).padStart(2, '0')}</div>
-                    </div>\`
-                ).join('');
+                        <div class="message-meta">
+                            \${weekdayText}<br>
+                            \${String(group.hour).padStart(2, '0')}:\${String(group.minute).padStart(2, '0')}<br>
+                            <button class="btn btn-danger" onclick="deleteRecurringMessageGroup('\${idsParam}')">DEL</button>
+                        </div>
+                    </div>\`;
+                }).join('');
             }
 
             // Update groups
             const groupsDiv = document.getElementById('groups');
             if (data.groups.length === 0) {
-                groupsDiv.innerHTML = '<div class="empty">No groups found. Try refreshing groups or check your WhatsApp connection.</div>';
+                groupsDiv.innerHTML = '<div class="empty">NO GROUPS FOUND</div>';
             } else {
                 groupsDiv.innerHTML = data.groups.map(group => 
                     \`<div class="group-item">
                         <div class="message-text">
                             <strong>\${group.name}</strong><br>
-                            <small style="color: #666;">\${group.id}</small>
-                            \${group.description ? \`<br><em style="color: #888; font-size: 0.9em;">\${group.description.length > 100 ? group.description.substring(0, 100) + '...' : group.description}</em>\` : ''}
+                            \${group.id}
                         </div>
-                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                            <div class="message-time">
-                                👥 \${group.participantCount} members
-                                \${group.creation ? \`<br><small>Created: \${new Date(group.creation * 1000).toLocaleDateString()}</small>\` : ''}
-                            </div>
-                            <button class="btn" style="font-size: 12px; padding: 5px 10px;" onclick="copyGroupId('\${group.id}')">📋 Copy ID</button>
+                        <div class="message-meta">
+                            \${group.participantCount} MEMBERS<br>
+                            <button class="btn" onclick="copyGroupId('\${group.id}')">COPY</button>
                         </div>
                     </div>\`
                 ).join('');
             }
+        }
+
+        function updateGroupDropdowns(groups) {
+            const chatSelect = document.getElementById('chatId');
+            const recurringChatSelect = document.getElementById('recurringChatId');
+            
+            // Clear existing options except first
+            chatSelect.innerHTML = '<option value="">Select group...</option>';
+            recurringChatSelect.innerHTML = '<option value="">Select group...</option>';
+            
+            // Add groups
+            groups.forEach(group => {
+                const option1 = new Option(group.name, group.id);
+                const option2 = new Option(group.name, group.id);
+                chatSelect.add(option1);
+                recurringChatSelect.add(option2);
+            });
         }
 
         function refreshData() {
@@ -489,22 +657,27 @@ const dashboardHTML = `
         function showStatus(message, isError = false) {
             const statusEl = document.getElementById('statusMessage');
             statusEl.textContent = message;
-            statusEl.className = \`status-message \${isError ? 'status-error' : 'status-success'}\`;
             statusEl.style.display = 'block';
+            statusEl.style.background = isError ? '#000000' : '#ffffff';
+            statusEl.style.color = isError ? '#ffffff' : '#000000';
             
             setTimeout(() => {
                 statusEl.style.display = 'none';
-            }, 5000);
+            }, 3000);
         }
 
         async function addScheduledMessage(event) {
             event.preventDefault();
             
             const formData = new FormData(event.target);
+            const date = formData.get('scheduleDate');
+            const time = formData.get('scheduleTime');
+            const datetime = \`\${date}T\${time}\`;
+            
             const data = {
                 chatId: formData.get('chatId'),
                 text: formData.get('text'),
-                datetime: formData.get('datetime')
+                datetime: datetime
             };
 
             try {
@@ -517,43 +690,145 @@ const dashboardHTML = `
                 });
 
                 if (response.ok) {
-                    showStatus('✅ Message scheduled successfully!');
+                    showStatus('MESSAGE SCHEDULED');
                     event.target.reset();
-                    fetchData(); // Refresh the list
+                    fetchData();
                 } else {
                     const error = await response.text();
-                    showStatus(\`❌ Failed to schedule message: \${error}\`, true);
+                    showStatus(\`ERROR: \${error}\`, true);
                 }
             } catch (error) {
-                showStatus(\`❌ Error: \${error.message}\`, true);
+                showStatus(\`ERROR: \${error.message}\`, true);
+            }
+        }
+
+        let selectedWeekdays = [];
+
+        function initWeekdayButtons() {
+            const weekdayButtons = document.querySelectorAll('.weekday-btn');
+            weekdayButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const day = parseInt(this.dataset.day);
+                    const index = selectedWeekdays.indexOf(day);
+                    
+                    if (index > -1) {
+                        selectedWeekdays.splice(index, 1);
+                        this.classList.remove('selected');
+                    } else {
+                        selectedWeekdays.push(day);
+                        this.classList.add('selected');
+                    }
+                });
+            });
+        }
+
+        async function addRecurringMessage(event) {
+            event.preventDefault();
+            
+            if (selectedWeekdays.length === 0) {
+                showStatus('SELECT AT LEAST ONE DAY', true);
+                return;
+            }
+            
+            const formData = new FormData(event.target);
+            
+            // Add recurring message for each selected weekday
+            const promises = selectedWeekdays.map(async (weekday) => {
+                const data = {
+                    chatId: formData.get('chatId'),
+                    text: formData.get('text'),
+                    weekday: weekday,
+                    hour: parseInt(formData.get('hour')),
+                    minute: parseInt(formData.get('minute'))
+                };
+
+                return fetch('/api/recurring', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+            });
+
+            try {
+                const responses = await Promise.all(promises);
+                const allSuccessful = responses.every(response => response.ok);
+                
+                if (allSuccessful) {
+                    showStatus('RECURRING MESSAGE ADDED');
+                    event.target.reset();
+                    selectedWeekdays = [];
+                    document.querySelectorAll('.weekday-btn').forEach(btn => btn.classList.remove('selected'));
+                    fetchData();
+                } else {
+                    showStatus('ERROR ADDING RECURRING MESSAGE', true);
+                }
+            } catch (error) {
+                showStatus(\`ERROR: \${error.message}\`, true);
+            }
+        }
+
+        async function deleteRecurringMessage(id) {
+            try {
+                const response = await fetch(\`/api/recurring/\${id}\`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showStatus('RECURRING MESSAGE DELETED');
+                    fetchData();
+                } else {
+                    const error = await response.text();
+                    showStatus(\`ERROR: \${error}\`, true);
+                }
+            } catch (error) {
+                showStatus(\`ERROR: \${error.message}\`, true);
+            }
+        }
+
+        async function deleteRecurringMessageGroup(ids) {
+            try {
+                const idArray = ids.split(',');
+                const promises = idArray.map(id => 
+                    fetch(\`/api/recurring/\${id.trim()}\`, { method: 'DELETE' })
+                );
+                
+                const responses = await Promise.all(promises);
+                const allSuccessful = responses.every(response => response.ok);
+                
+                if (allSuccessful) {
+                    showStatus('RECURRING MESSAGE DELETED');
+                    fetchData();
+                } else {
+                    showStatus('ERROR DELETING SOME MESSAGES', true);
+                }
+            } catch (error) {
+                showStatus(\`ERROR: \${error.message}\`, true);
             }
         }
 
         async function deleteScheduledMessage(id) {
-            if (!confirm('Are you sure you want to delete this scheduled message?')) {
-                return;
-            }
-
             try {
                 const response = await fetch(\`/api/schedule/\${id}\`, {
                     method: 'DELETE'
                 });
 
                 if (response.ok) {
-                    showStatus('✅ Message deleted successfully!');
-                    fetchData(); // Refresh the list
+                    showStatus('SCHEDULED MESSAGE DELETED');
+                    fetchData();
                 } else {
                     const error = await response.text();
-                    showStatus(\`❌ Failed to delete message: \${error}\`, true);
+                    showStatus(\`ERROR: \${error}\`, true);
                 }
             } catch (error) {
-                showStatus(\`❌ Error: \${error.message}\`, true);
+                showStatus(\`ERROR: \${error.message}\`, true);
             }
         }
 
         async function refreshGroups() {
             try {
-                showStatus('🔄 Refreshing groups...', false);
+                showStatus('REFRESHING GROUPS...');
                 
                 const response = await fetch('/api/refresh-groups', {
                     method: 'POST'
@@ -561,55 +836,54 @@ const dashboardHTML = `
 
                 if (response.ok) {
                     const result = await response.json();
-                    showStatus(\`✅ \${result.message}\`, false);
-                    fetchData(); // Refresh the entire UI to show updated groups
+                    showStatus(\`REFRESHED \${result.groupCount} GROUPS\`);
+                    fetchData();
                 } else {
                     const error = await response.text();
-                    showStatus(\`❌ Failed to refresh groups: \${error}\`, true);
+                    showStatus(\`ERROR: \${error}\`, true);
                 }
             } catch (error) {
-                showStatus(\`❌ Error refreshing groups: \${error.message}\`, true);
+                showStatus(\`ERROR: \${error.message}\`, true);
             }
         }
 
         function copyGroupId(groupId) {
-            // Copy to clipboard
             navigator.clipboard.writeText(groupId).then(() => {
-                showStatus(\`📋 Group ID copied to clipboard: \${groupId}\`, false);
+                showStatus('GROUP ID COPIED');
                 
-                // Also populate the chat ID field in the scheduling form
-                const chatIdInput = document.getElementById('chatId');
-                if (chatIdInput) {
-                    chatIdInput.value = groupId;
-                    chatIdInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    chatIdInput.focus();
-                }
+                // Set both dropdowns to this group
+                document.getElementById('chatId').value = groupId;
+                document.getElementById('recurringChatId').value = groupId;
             }).catch(err => {
-                console.error('Failed to copy group ID:', err);
-                showStatus('❌ Failed to copy group ID to clipboard', true);
+                console.error('Failed to copy:', err);
+                showStatus('COPY FAILED', true);
                 
-                // Fallback: still populate the form field
-                const chatIdInput = document.getElementById('chatId');
-                if (chatIdInput) {
-                    chatIdInput.value = groupId;
-                    chatIdInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    chatIdInput.focus();
-                    showStatus('📝 Group ID added to message form', false);
-                }
+                // Fallback: still set the form fields
+                document.getElementById('chatId').value = groupId;
+                document.getElementById('recurringChatId').value = groupId;
+                showStatus('GROUP SELECTED');
             });
         }
 
-        // Set default datetime to 1 hour from now
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
-            const datetimeInput = document.getElementById('datetime');
+            // Set default date/time to now + 1 hour
             const now = new Date();
             now.setHours(now.getHours() + 1);
-            datetimeInput.value = now.toISOString().slice(0, 16);
+            
+            const dateInput = document.getElementById('scheduleDate');
+            const timeInput = document.getElementById('scheduleTime');
+            
+            if (dateInput) dateInput.value = now.toISOString().split('T')[0];
+            if (timeInput) timeInput.value = now.toTimeString().slice(0, 5);
+            
+            // Initialize weekday buttons
+            initWeekdayButtons();
         });
 
         // Initial load and auto-refresh
         fetchData();
-        setInterval(fetchData, 5000); // Refresh every 5 seconds
+        setInterval(fetchData, 10000); // Refresh every 10 seconds
     </script>
 </body>
 </html>`;
@@ -721,6 +995,57 @@ const server = createServer(async (req, res) => {
       console.error('Error refreshing groups:', error);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
       res.end('Failed to refresh groups');
+    }
+    return;
+  }
+
+  if (url.pathname === '/api/recurring' && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+    
+    req.on('end', () => {
+      try {
+        const { chatId, text, weekday, hour, minute } = JSON.parse(body);
+        
+        if (!chatId || !text || weekday === undefined || hour === undefined || minute === undefined) {
+          res.writeHead(400, { 'Content-Type': 'text/plain' });
+          res.end('Missing required fields: chatId, text, weekday, hour, minute');
+          return;
+        }
+
+        // Insert into database
+        const id = dbOps.insertRecurringMessage({ chatId, text, weekday, hour, minute });
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, id }));
+      } catch (error) {
+        console.error('Error adding recurring message:', error);
+        res.writeHead(500, { 'Content-Type': 'text/plain' });
+        res.end('Internal server error');
+      }
+    });
+    return;
+  }
+
+  if (url.pathname.startsWith('/api/recurring/') && req.method === 'DELETE') {
+    const id = url.pathname.split('/')[3];
+    
+    try {
+      const result = dbOps.deleteRecurringMessage(parseInt(id));
+      
+      if (result.changes > 0) {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true }));
+      } else {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.end('Recurring message not found');
+      }
+    } catch (error) {
+      console.error('Error deleting recurring message:', error);
+      res.writeHead(500, { 'Content-Type': 'text/plain' });
+      res.end('Internal server error');
     }
     return;
   }

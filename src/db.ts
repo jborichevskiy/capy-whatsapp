@@ -42,8 +42,16 @@ const getRecurringStmt = db.prepare(`
   AND (lastSent IS NULL OR date(lastSent) < date(?))
 `);
 
+const getAllRecurringStmt = db.prepare(`
+  SELECT * FROM recurring_messages ORDER BY weekday, hour, minute
+`);
+
 const deleteScheduledStmt = db.prepare(`
   DELETE FROM scheduled_messages WHERE id = ?
+`);
+
+const deleteRecurringStmt = db.prepare(`
+  DELETE FROM recurring_messages WHERE id = ?
 `);
 
 const updateRecurringStmt = db.prepare(`
@@ -77,8 +85,17 @@ export const dbOps: DatabaseOperations = {
     return getRecurringStmt.all(weekday, hour, minute, today) as RecurringMessage[];
   },
 
+  getAllRecurringMessages: (): RecurringMessage[] => {
+    return getAllRecurringStmt.all() as RecurringMessage[];
+  },
+
   deleteScheduledMessage: (id: number): { changes: number } => {
     const result = deleteScheduledStmt.run(id);
+    return { changes: result.changes };
+  },
+
+  deleteRecurringMessage: (id: number): { changes: number } => {
+    const result = deleteRecurringStmt.run(id);
     return { changes: result.changes };
   },
 

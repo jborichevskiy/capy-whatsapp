@@ -78,16 +78,7 @@ export function getPendingMessages(): ScheduledMessage[] {
  * Helper to get all recurring messages
  */
 export function getAllRecurringMessages(): RecurringMessage[] {
-  // Get all by checking each day/time combination
-  const messages: RecurringMessage[] = [];
-  for (let day = 0; day <= 6; day++) {
-    for (let hour = 0; hour <= 23; hour++) {
-      for (let minute = 0; minute <= 59; minute++) {
-        messages.push(...dbOps.getRecurringMessages(day, hour, minute));
-      }
-    }
-  }
-  return messages;
+  return dbOps.getAllRecurringMessages();
 }
 
 /**
