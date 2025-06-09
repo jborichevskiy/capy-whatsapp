@@ -184,200 +184,295 @@ const dashboardHTML = `
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Courier New', monospace;
-            background: #ffffff;
-            color: #000000;
-            line-height: 1.4;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #2a2a2a;
+            color: #f5f5f5;
+            line-height: 1.5;
             height: 100vh;
             overflow: hidden;
         }
         .container { 
             max-width: 100vw; 
             height: 100vh;
-            padding: 10px;
+            padding: 16px;
             display: grid;
-            grid-template-rows: auto 1fr;
-            gap: 10px;
-        }
-        .header { 
-            background: #000000;
-            color: #ffffff;
-            padding: 10px 20px;
-            border: 2px solid #000000;
-            text-align: center;
-            font-weight: bold;
+            grid-template-rows: 1fr;
         }
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            height: 100%;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            height: 100vh;
             overflow: hidden;
         }
         .column {
-            border: 2px solid #000000;
+            background: #353535;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        .column-header {
-            background: #000000;
-            color: #ffffff;
-            padding: 8px 12px;
-            font-weight: bold;
-            font-size: 14px;
-            border-bottom: 2px solid #000000;
+        .column-with-form {
+            position: relative;
+        }
+        .column-form-sticky {
+            position: sticky;
+            bottom: 0;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+        .form-section.collapsed .form-content {
+            display: none;
+        }
+        .form-header-clickable {
+            cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            user-select: none;
+        }
+        .form-header-clickable:hover {
+            background: #7c3aed;
+        }
+        .form-toggle-icon {
+            font-weight: bold;
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+        .form-section.collapsed .form-toggle-icon {
+            transform: rotate(180deg);
+        }
+        .column-header {
+            background: #8b5cf6;
+            color: #ffffff;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 12px 12px 0 0;
         }
         .column-content {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 16px;
+            background: #404040;
         }
         .status-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 16px;
         }
         .status-item {
-            padding: 6px;
-            border: 1px solid #000000;
+            padding: 12px;
+            background: #4a4a4a;
+            border-radius: 8px;
             font-size: 12px;
+            border-left: 3px solid #8b5cf6;
         }
-        .status-label { font-weight: bold; }
-        .connected::before { content: "●"; color: #000000; margin-right: 4px; }
-        .disconnected::before { content: "○"; color: #000000; margin-right: 4px; }
+        .status-label { 
+            font-weight: 600; 
+            color: #d1d5db;
+            margin-bottom: 4px;
+        }
+        .connected::before { content: "●"; color: #10b981; margin-right: 6px; }
+        .disconnected::before { content: "○"; color: #ef4444; margin-right: 6px; }
         
         .form-section {
-            border: 1px solid #000000;
-            margin-bottom: 10px;
+            background: #4a4a4a;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            overflow: hidden;
         }
         .form-header {
-            background: #000000;
+            background: #8b5cf6;
             color: #ffffff;
-            padding: 6px 8px;
+            padding: 10px 12px;
             font-size: 12px;
-            font-weight: bold;
+            font-weight: 600;
         }
         .form-content {
-            padding: 8px;
+            padding: 16px;
         }
         .form-group {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
         .form-group label {
             display: block;
-            margin-bottom: 3px;
-            font-size: 11px;
-            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #d1d5db;
         }
         .form-group input, .form-group textarea, .form-group select {
             width: 100%;
-            padding: 4px;
-            border: 1px solid #000000;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            background: #ffffff;
+            padding: 8px 12px;
+            border: 1px solid #5a5a5a;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 12px;
+            background: #2a2a2a;
+            color: #f5f5f5;
+            transition: border-color 0.2s ease;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+        }
+        .form-group select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 32px;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        .checkbox-group label {
+            margin: 0;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .recurring-fields {
+            display: none;
+        }
+        .recurring-fields.show {
+            display: block;
         }
         .form-group textarea {
-            height: 50px;
+            height: 60px;
             resize: none;
         }
         .form-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 12px;
         }
         .btn {
-            background: #ffffff;
-            color: #000000;
-            border: 2px solid #000000;
-            padding: 4px 8px;
+            background: #8b5cf6;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
             cursor: pointer;
-            font-family: 'Courier New', monospace;
-            font-size: 11px;
-            font-weight: bold;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s ease;
         }
         .btn:hover {
-            background: #000000;
-            color: #ffffff;
+            background: #7c3aed;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(139, 92, 246, 0.2);
         }
         .btn-danger {
-            background: #ffffff;
-            border-color: #000000;
-        }
-        .btn-danger:hover {
-            background: #000000;
+            background: #ef4444;
             color: #ffffff;
         }
+        .btn-danger:hover {
+            background: #dc2626;
+            box-shadow: 0 4px 8px rgba(239, 68, 68, 0.2);
+        }
         .message-item, .group-item {
-            padding: 6px;
-            border-bottom: 1px solid #000000;
-            font-size: 11px;
+            padding: 12px;
+            border-radius: 6px;
+            background: #4a4a4a;
+            margin-bottom: 8px;
+            font-size: 12px;
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            gap: 8px;
+            gap: 12px;
+            transition: background-color 0.2s ease;
         }
-        .message-item:last-child, .group-item:last-child { border-bottom: none; }
+        .message-item:hover, .group-item:hover {
+            background: #525252;
+        }
+        .message-item:last-child, .group-item:last-child { margin-bottom: 0; }
         .message-text { 
             flex: 1; 
             word-break: break-word;
-            line-height: 1.2;
+            line-height: 1.4;
+        }
+        .message-text strong {
+            color: #8b5cf6;
         }
         .message-meta { 
-            font-size: 10px; 
+            font-size: 11px; 
             text-align: right;
             white-space: nowrap;
+            color: #d1d5db;
         }
         .empty { 
             text-align: center; 
-            padding: 20px; 
+            padding: 32px; 
             font-style: italic;
-            font-size: 11px;
+            font-size: 12px;
+            color: #9ca3af;
         }
         .status-message {
-            padding: 6px;
-            border: 1px solid #000000;
-            margin-bottom: 8px;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
             display: none;
-            font-size: 11px;
+            font-size: 12px;
+            font-weight: 500;
         }
         .weekday-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 2px;
-            margin-bottom: 8px;
+            gap: 4px;
+            margin-bottom: 12px;
         }
         .weekday-btn {
-            padding: 3px;
-            border: 1px solid #000000;
-            background: #ffffff;
+            padding: 6px;
+            border: 1px solid #5a5a5a;
+            background: #2a2a2a;
+            color: #f5f5f5;
+            border-radius: 4px;
             font-size: 10px;
             cursor: pointer;
             text-align: center;
+            transition: all 0.2s ease;
+        }
+        .weekday-btn:hover {
+            background: #404040;
         }
         .weekday-btn.selected {
-            background: #000000;
+            background: #8b5cf6;
+            border-color: #8b5cf6;
             color: #ffffff;
         }
         .time-inputs {
             display: grid;
             grid-template-columns: 1fr auto 1fr 1fr;
-            gap: 4px;
+            gap: 8px;
             align-items: center;
+        }
+        .time-inputs span {
+            text-align: center;
+            color: #d1d5db;
+            font-weight: 600;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            WHATSAPP BOT TERMINAL
-        </div>
-
         <div class="main-grid">
             <!-- Column 1: Status & Groups -->
             <div class="column">
@@ -409,62 +504,51 @@ const dashboardHTML = `
                 </div>
             </div>
 
-            <!-- Column 2: Scheduled Messages -->
-            <div class="column">
+            <!-- Column 2: Messages -->
+            <div class="column column-with-form">
                 <div class="column-header">
-                    SCHEDULED MESSAGES
+                    MESSAGES
                     <button class="btn" onclick="refreshData()">REFRESH</button>
                 </div>
-                <div class="column-content">
+                <div class="column-content" style="padding-bottom: 80px;">
                     <div id="statusMessage" class="status-message"></div>
-                    
-                    <div class="form-section">
-                        <div class="form-header">ADD SCHEDULED MESSAGE</div>
-                        <div class="form-content">
-                            <form id="scheduleForm" onsubmit="addScheduledMessage(event)">
-                                <div class="form-group">
-                                    <label>GROUP/CHAT:</label>
-                                    <select id="chatId" name="chatId" required>
-                                        <option value="">Select group or enter custom...</option>
-                                    </select>
-                                </div>
+                    <div id="scheduledMessages">Loading...</div>
+                    <div id="recurringMessages">Loading...</div>
+                </div>
+                
+                <div class="form-section column-form-sticky collapsed" id="messageFormSection">
+                    <div class="form-header form-header-clickable" onclick="toggleForm('messageFormSection')">
+                        <span>ADD MESSAGE</span>
+                        <span class="form-toggle-icon">▼</span>
+                    </div>
+                    <div class="form-content">
+                        <form id="messageForm" onsubmit="addMessage(event)">
+                            <div class="form-group">
+                                <label>GROUP/CHAT:</label>
+                                <select id="chatId" name="chatId" required>
+                                    <option value="">Select group...</option>
+                                </select>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="isRecurring" name="isRecurring" onchange="toggleRecurringFields()">
+                                <label for="isRecurring">Recurring Message</label>
+                            </div>
+                            
+                            <div id="oneTimeFields">
                                 <div class="form-row">
                                     <div class="form-group">
                                         <label>DATE:</label>
-                                        <input type="date" id="scheduleDate" name="scheduleDate" required>
+                                        <input type="date" id="scheduleDate" name="scheduleDate">
                                     </div>
                                     <div class="form-group">
                                         <label>TIME (MT):</label>
-                                        <input type="time" id="scheduleTime" name="scheduleTime" required>
+                                        <input type="time" id="scheduleTime" name="scheduleTime">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label>MESSAGE:</label>
-                                    <textarea id="text" name="text" placeholder="Enter message..." required></textarea>
-                                </div>
-                                <button type="submit" class="btn">SCHEDULE</button>
-                            </form>
-                        </div>
-                    </div>
-                    
-                    <div id="scheduledMessages">Loading...</div>
-                </div>
-            </div>
-
-            <!-- Column 3: Recurring Messages -->
-            <div class="column">
-                <div class="column-header">RECURRING MESSAGES</div>
-                <div class="column-content">
-                    <div class="form-section">
-                        <div class="form-header">ADD RECURRING MESSAGE</div>
-                        <div class="form-content">
-                            <form id="recurringForm" onsubmit="addRecurringMessage(event)">
-                                <div class="form-group">
-                                    <label>GROUP/CHAT:</label>
-                                    <select id="recurringChatId" name="chatId" required>
-                                        <option value="">Select group or enter custom...</option>
-                                    </select>
-                                </div>
+                            </div>
+                            
+                            <div id="recurringFields" class="recurring-fields">
                                 <div class="form-group">
                                     <label>DAYS:</label>
                                     <div class="weekday-grid">
@@ -480,36 +564,37 @@ const dashboardHTML = `
                                 <div class="form-group">
                                     <label>TIME (MT):</label>
                                     <div class="time-inputs">
-                                        <select id="recurringHour" name="hour" required>
+                                        <select id="recurringHour" name="hour">
                                             ${Array.from({length: 12}, (_, i) => {
                                                 const hour = i === 0 ? 12 : i;
                                                 return `<option value="${hour}">${hour}</option>`;
                                             }).join('')}
                                         </select>
                                         <span>:</span>
-                                        <select id="recurringMinute" name="minute" required>
+                                        <select id="recurringMinute" name="minute">
                                             ${Array.from({length: 60}, (_, i) => 
                                                 `<option value="${i}">${i.toString().padStart(2, '0')}</option>`
                                             ).join('')}
                                         </select>
-                                        <select id="recurringAmPm" name="ampm" required>
+                                        <select id="recurringAmPm" name="ampm">
                                             <option value="AM">AM</option>
                                             <option value="PM">PM</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label>MESSAGE:</label>
-                                    <textarea id="recurringText" name="text" placeholder="Enter message..." required></textarea>
-                                </div>
-                                <button type="submit" class="btn">ADD RECURRING</button>
-                            </form>
-                        </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>MESSAGE:</label>
+                                <textarea id="messageText" name="text" placeholder="Enter message..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn">ADD MESSAGE</button>
+                        </form>
                     </div>
-                    
-                    <div id="recurringMessages">Loading...</div>
                 </div>
             </div>
+
+
         </div>
     </div>
 
@@ -560,25 +645,30 @@ const dashboardHTML = `
             if (data.scheduledMessages.length === 0) {
                 scheduledDiv.innerHTML = '<div class="empty">NO SCHEDULED MESSAGES</div>';
             } else {
-                scheduledDiv.innerHTML = data.scheduledMessages.map(msg => 
-                    \`<div class="message-item">
-                        <div class="message-text">
-                            <strong>\${getGroupName(msg.chatId)}</strong><br>
-                            \${msg.text}
-                        </div>
-                        <div class="message-meta">
-                            \${new Date(msg.datetime).toLocaleDateString()}<br>
-                            \${new Date(msg.datetime).toLocaleTimeString().substring(0, 5)}<br>
-                            <button class="btn btn-danger" onclick="deleteScheduledMessage(\${msg.id})">DEL</button>
-                        </div>
-                    </div>\`
-                ).join('');
+                scheduledDiv.innerHTML = '<h4 style="margin-bottom: 12px; color: #8b5cf6; font-size: 14px;">SCHEDULED</h4>' +
+                    data.scheduledMessages.map(msg => 
+                        \`<div class="message-item">
+                            <div class="message-text">
+                                <strong>\${getGroupName(msg.chatId)}</strong><br>
+                                \${msg.text}
+                            </div>
+                            <div class="message-meta">
+                                \${new Date(msg.datetime).toLocaleDateString()}<br>
+                                \${new Date(msg.datetime).toLocaleTimeString().substring(0, 5)}<br>
+                                <button class="btn btn-danger" onclick="deleteScheduledMessage(\${msg.id})">DEL</button>
+                            </div>
+                        </div>\`
+                    ).join('');
             }
 
             // Update recurring messages
             const recurringDiv = document.getElementById('recurringMessages');
             if (data.recurringMessages.length === 0) {
-                recurringDiv.innerHTML = '<div class="empty">NO RECURRING MESSAGES</div>';
+                if (data.scheduledMessages.length === 0) {
+                    recurringDiv.innerHTML = '<div class="empty">NO MESSAGES</div>';
+                } else {
+                    recurringDiv.innerHTML = '';
+                }
             } else {
                 const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
                 
@@ -600,7 +690,11 @@ const dashboardHTML = `
                     grouped[key].ids.push(msg.id);
                 });
                 
-                recurringDiv.innerHTML = Object.values(grouped).map(group => {
+                const headerHtml = data.scheduledMessages.length > 0 ? 
+                    '<h4 style="margin: 20px 0 12px 0; color: #8b5cf6; font-size: 14px;">RECURRING</h4>' :
+                    '<h4 style="margin-bottom: 12px; color: #8b5cf6; font-size: 14px;">RECURRING</h4>';
+                
+                recurringDiv.innerHTML = headerHtml + Object.values(grouped).map(group => {
                     const sortedWeekdays = group.weekdays.sort((a, b) => a - b);
                     const weekdayText = sortedWeekdays.map(day => weekdays[day]).join(', ');
                     const idsParam = group.ids.join(',');
@@ -641,18 +735,14 @@ const dashboardHTML = `
 
         function updateGroupDropdowns(groups) {
             const chatSelect = document.getElementById('chatId');
-            const recurringChatSelect = document.getElementById('recurringChatId');
             
             // Clear existing options except first
             chatSelect.innerHTML = '<option value="">Select group...</option>';
-            recurringChatSelect.innerHTML = '<option value="">Select group...</option>';
             
             // Add groups
             groups.forEach(group => {
-                const option1 = new Option(group.name, group.id);
-                const option2 = new Option(group.name, group.id);
-                chatSelect.add(option1);
-                recurringChatSelect.add(option2);
+                const option = new Option(group.name, group.id);
+                chatSelect.add(option);
             });
         }
 
@@ -672,39 +762,101 @@ const dashboardHTML = `
             }, 3000);
         }
 
-        async function addScheduledMessage(event) {
+        async function addMessage(event) {
             event.preventDefault();
             
             const formData = new FormData(event.target);
-            const date = formData.get('scheduleDate');
-            const time = formData.get('scheduleTime');
-            const datetime = \`\${date}T\${time}\`;
+            const isRecurring = document.getElementById('isRecurring').checked;
             
-            const data = {
-                chatId: formData.get('chatId'),
-                text: formData.get('text'),
-                datetime: datetime
-            };
+            if (isRecurring) {
+                // Handle recurring message
+                if (selectedWeekdays.length === 0) {
+                    showStatus('SELECT AT LEAST ONE DAY', true);
+                    return;
+                }
+                
+                // Convert 12-hour format to 24-hour format
+                const hour12 = parseInt(formData.get('hour'));
+                const ampm = formData.get('ampm');
+                let hour24;
+                
+                if (ampm === 'AM') {
+                    hour24 = hour12 === 12 ? 0 : hour12;
+                } else {
+                    hour24 = hour12 === 12 ? 12 : hour12 + 12;
+                }
+                
+                // Add recurring message for each selected weekday
+                const promises = selectedWeekdays.map(async (weekday) => {
+                    const data = {
+                        chatId: formData.get('chatId'),
+                        text: formData.get('text'),
+                        weekday: weekday,
+                        hour: hour24,
+                        minute: parseInt(formData.get('minute'))
+                    };
 
-            try {
-                const response = await fetch('/api/schedule', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
+                    return fetch('/api/recurring', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    });
                 });
 
-                if (response.ok) {
-                    showStatus('MESSAGE SCHEDULED');
-                    event.target.reset();
-                    fetchData();
-                } else {
-                    const error = await response.text();
-                    showStatus(\`ERROR: \${error}\`, true);
+                try {
+                    const responses = await Promise.all(promises);
+                    const allSuccessful = responses.every(response => response.ok);
+                    
+                    if (allSuccessful) {
+                        showStatus('RECURRING MESSAGE ADDED');
+                        event.target.reset();
+                        selectedWeekdays = [];
+                        document.querySelectorAll('.weekday-btn').forEach(btn => btn.classList.remove('selected'));
+                        document.getElementById('isRecurring').checked = false;
+                        toggleRecurringFields();
+                        fetchData();
+                    } else {
+                        showStatus('ERROR ADDING RECURRING MESSAGE', true);
+                    }
+                } catch (error) {
+                    showStatus(\`ERROR: \${error.message}\`, true);
                 }
-            } catch (error) {
-                showStatus(\`ERROR: \${error.message}\`, true);
+            } else {
+                // Handle one-time scheduled message
+                const date = formData.get('scheduleDate');
+                const time = formData.get('scheduleTime');
+                const datetime = \`\${date}T\${time}\`;
+                
+                const data = {
+                    chatId: formData.get('chatId'),
+                    text: formData.get('text'),
+                    datetime: datetime
+                };
+
+                try {
+                    const response = await fetch('/api/schedule', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        showStatus('MESSAGE SCHEDULED');
+                        event.target.reset();
+                        document.getElementById('isRecurring').checked = false;
+                        toggleRecurringFields();
+                        fetchData();
+                    } else {
+                        const error = await response.text();
+                        showStatus(\`ERROR: \${error}\`, true);
+                    }
+                } catch (error) {
+                    showStatus(\`ERROR: \${error.message}\`, true);
+                }
             }
         }
 
@@ -728,63 +880,7 @@ const dashboardHTML = `
             });
         }
 
-        async function addRecurringMessage(event) {
-            event.preventDefault();
-            
-            if (selectedWeekdays.length === 0) {
-                showStatus('SELECT AT LEAST ONE DAY', true);
-                return;
-            }
-            
-            const formData = new FormData(event.target);
-            
-            // Convert 12-hour format to 24-hour format
-            const hour12 = parseInt(formData.get('hour'));
-            const ampm = formData.get('ampm');
-            let hour24;
-            
-            if (ampm === 'AM') {
-                hour24 = hour12 === 12 ? 0 : hour12;
-            } else {
-                hour24 = hour12 === 12 ? 12 : hour12 + 12;
-            }
-            
-            // Add recurring message for each selected weekday
-            const promises = selectedWeekdays.map(async (weekday) => {
-                const data = {
-                    chatId: formData.get('chatId'),
-                    text: formData.get('text'),
-                    weekday: weekday,
-                    hour: hour24,
-                    minute: parseInt(formData.get('minute'))
-                };
 
-                return fetch('/api/recurring', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data)
-                });
-            });
-
-            try {
-                const responses = await Promise.all(promises);
-                const allSuccessful = responses.every(response => response.ok);
-                
-                if (allSuccessful) {
-                    showStatus('RECURRING MESSAGE ADDED');
-                    event.target.reset();
-                    selectedWeekdays = [];
-                    document.querySelectorAll('.weekday-btn').forEach(btn => btn.classList.remove('selected'));
-                    fetchData();
-                } else {
-                    showStatus('ERROR ADDING RECURRING MESSAGE', true);
-                }
-            } catch (error) {
-                showStatus(\`ERROR: \${error.message}\`, true);
-            }
-        }
 
         async function deleteRecurringMessage(id) {
             try {
@@ -868,18 +964,47 @@ const dashboardHTML = `
             navigator.clipboard.writeText(groupId).then(() => {
                 showStatus('GROUP ID COPIED');
                 
-                // Set both dropdowns to this group
+                // Set the dropdown to this group
                 document.getElementById('chatId').value = groupId;
-                document.getElementById('recurringChatId').value = groupId;
             }).catch(err => {
                 console.error('Failed to copy:', err);
                 showStatus('COPY FAILED', true);
                 
-                // Fallback: still set the form fields
+                // Fallback: still set the form field
                 document.getElementById('chatId').value = groupId;
-                document.getElementById('recurringChatId').value = groupId;
                 showStatus('GROUP SELECTED');
             });
+        }
+
+        function toggleForm(formId) {
+            const formSection = document.getElementById(formId);
+            const isCollapsed = formSection.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                formSection.classList.remove('collapsed');
+            } else {
+                formSection.classList.add('collapsed');
+            }
+        }
+
+        function toggleRecurringFields() {
+            const isRecurring = document.getElementById('isRecurring').checked;
+            const oneTimeFields = document.getElementById('oneTimeFields');
+            const recurringFields = document.getElementById('recurringFields');
+            const dateInput = document.getElementById('scheduleDate');
+            const timeInput = document.getElementById('scheduleTime');
+            
+            if (isRecurring) {
+                oneTimeFields.style.display = 'none';
+                recurringFields.classList.add('show');
+                dateInput.removeAttribute('required');
+                timeInput.removeAttribute('required');
+            } else {
+                oneTimeFields.style.display = 'block';
+                recurringFields.classList.remove('show');
+                dateInput.setAttribute('required', 'required');
+                timeInput.setAttribute('required', 'required');
+            }
         }
 
         // Initialize on page load
@@ -896,6 +1021,9 @@ const dashboardHTML = `
             
             // Initialize weekday buttons
             initWeekdayButtons();
+            
+            // Initialize form field visibility
+            toggleRecurringFields();
         });
 
         // Initial load and auto-refresh
