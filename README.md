@@ -158,17 +158,6 @@ The test utility can be extended in `src/test.ts` for additional functionality.
 - **Auth**: Stored in `auth/` directory (created automatically)
 - **Scheduling**: Runs every minute by default (configurable in `scheduler.ts`)
 
-### Environment Variables
-
-Create a `.env` file in the client directory with the following variables:
-
-```
-# Client Configuration
-VITE_HOSTNAME=your-hostname # Used for HMR configuration
-```
-
-This will replace hardcoded values in the config files.
-
 ## 📝 Notes
 
 - **WhatsApp ToS**: This bot connects as a regular WhatsApp user. Follow WhatsApp's Terms of Service.
@@ -199,8 +188,3 @@ This will replace hardcoded values in the config files.
 - Integration with external APIs
 - Group management features
 - Analytics and reporting 
-
-# running on mac
-
-pm2 start npm --name whatsapp-bot-server -- run dev:server
-pm2 start npm --name whatsapp-bot-client -- run dev:client

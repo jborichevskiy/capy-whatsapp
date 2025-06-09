@@ -7,7 +7,7 @@ export default defineConfig({
     port: 3001,
     host: true,
     hmr: {
-      host: process.env.VITE_HOSTNAME || 'localhost'
+      host: 'jons-mac-mini'
     },
     proxy: {
       '/api': {
