@@ -7,7 +7,7 @@
     "start": "tsx src/server.ts",
     "dev": "concurrently \"tsx --watch src/server.ts\" \"cd client && vite\"",
     "dev:server": "tsx --watch src/server.ts",
-    "dev:client": "cd client && vite",
+    "dev:client": "cd client && vite --host",
     "bot-only": "tsx src/index.ts",
     "bot-only:dev": "tsx --watch src/index.ts",
     "build": "cd client && vite build && cd .. && tsc",

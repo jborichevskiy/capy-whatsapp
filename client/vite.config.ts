@@ -5,6 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 3001,
+    host: true,
+    hmr: {
+      host: 'jons-mac-mini'
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3000',
