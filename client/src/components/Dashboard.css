@@ -1,0 +1,36 @@
+.dashboard {
+  flex: 1;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.connection-status {
+  display: flex;
+  gap: 16px;
+  padding: 8px 16px;
+  background: #3a3a3a;
+  border-bottom: 1px solid #404040;
+  font-size: 12px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-indicator.connected {
+  color: #10b981;
+}
+
+.status-indicator.disconnected {
+  color: #ef4444;
+} 
