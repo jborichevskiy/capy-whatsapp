@@ -7,6 +7,7 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import * as qrcode from "qrcode-terminal";
+import { existsSync, rmSync } from "fs";
 
 // Message handlers
 export async function handleMessage(msg: any): Promise<void> {
@@ -32,6 +33,20 @@ export async function handleReaction(reaction: any): Promise<void> {
 export async function handleChatUpdate(update: any): Promise<void> {
   console.log("💬 Chat update:", update);
   // Add chat update handling logic here
+}
+
+// Function to check if auth exists
+export function hasExistingAuth(): boolean {
+  return existsSync("auth/creds.json");
+}
+
+// Function to clean up auth files
+export function cleanupAuth(): void {
+  if (existsSync("auth")) {
+    console.log("🗑️  Cleaning up old authentication files...");
+    rmSync("auth", { recursive: true, force: true });
+    console.log("✅ Auth files cleaned up successfully");
+  }
 }
 
 export async function createBot(): Promise<WASocket> {
@@ -67,12 +82,32 @@ export async function createBot(): Promise<WASocket> {
     }
     
     if (connection === "close") {
-      const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+      const error = lastDisconnect?.error as Boom;
+      const statusCode = error?.output?.statusCode;
+      const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+      
       console.log("🔌 Connection closed due to:", lastDisconnect?.error);
+      
+      // Handle authentication expiry specifically
+      if (statusCode === 401) {
+        console.log("\n⚠️  Authentication expired or invalid!");
+        console.log("🔐 Your WhatsApp session has expired. This typically happens when:");
+        console.log("   • You haven't used the bot for several weeks");
+        console.log("   • WhatsApp Web/Desktop sessions were cleared on your phone");
+        console.log("   • Your WhatsApp account security settings changed\n");
+        console.log("🔄 To fix this, you'll need to re-authenticate:");
+        console.log("   1. Delete the 'auth' folder: rm -rf auth");
+        console.log("   2. Restart the bot: pnpm dev");
+        console.log("   3. Scan the new QR code with WhatsApp\n");
+        console.log("❌ Bot will NOT auto-reconnect. Please follow the steps above.");
+        return; // Don't attempt to reconnect on auth failure
+      }
       
       if (shouldReconnect) {
         console.log("🔄 Reconnecting...");
         createBot();
+      } else {
+        console.log("❌ Bot logged out. Restart the bot to reconnect.");
       }
     } else if (connection === "open") {
       console.log("✅ WhatsApp connection established!");

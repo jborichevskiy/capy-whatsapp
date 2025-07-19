@@ -5,7 +5,7 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { createBot } from "./whatsapp";
+import { createBot, hasExistingAuth, cleanupAuth } from "./whatsapp";
 import { setupScheduler } from "./scheduler";
 import { dbOps } from "./db";
 import { getPendingMessages, getAllRecurringMessages, formatChatId } from "./utils";
@@ -115,6 +115,14 @@ async function updateGroups() {
 async function initializeBot() {
   try {
     console.log("🚀 Initializing WhatsApp Bot...");
+    
+    // Check if we have existing auth
+    if (hasExistingAuth()) {
+      console.log("🔐 Found existing authentication files");
+    } else {
+      console.log("🆕 No existing authentication found - you'll need to scan a QR code");
+    }
+    
     sock = await createBot();
     
     // Setup scheduler
@@ -122,8 +130,9 @@ async function initializeBot() {
     
     // Listen for connection updates
     sock.ev.on("connection.update", async (update: any) => {
-      const { connection } = update;
+      const { connection, lastDisconnect } = update;
       botState.connected = connection === "open";
+      
       if (botState.connected) {
         botState.lastConnectionTime = new Date();
         console.log("✅ WhatsApp connected");
@@ -134,7 +143,23 @@ async function initializeBot() {
         // Fetch groups after connection is established
         setTimeout(updateGroups, 2000);
       } else {
-        broadcastUpdate('CONNECTION_UPDATE', { connected: false });
+        // Check if it's an auth failure
+        const error = lastDisconnect?.error as any;
+        const statusCode = error?.output?.statusCode;
+        
+        if (statusCode === 401) {
+          broadcastUpdate('AUTH_ERROR', { 
+            message: 'Authentication expired. Please delete the auth folder and restart the bot.',
+            instructions: [
+              'Stop the bot (Ctrl+C)',
+              'Run: rm -rf auth',
+              'Run: pnpm dev',
+              'Scan the new QR code'
+            ]
+          });
+        } else {
+          broadcastUpdate('CONNECTION_UPDATE', { connected: false });
+        }
       }
     });
 
@@ -418,6 +443,46 @@ const server = createServer(async (req, res) => {
       console.error('Error deleting recurring message:', error);
       res.writeHead(500, { 'Content-Type': 'text/plain' });
       res.end('Internal server error');
+    }
+    return;
+  }
+
+  // Clean up auth endpoint
+  if (url.pathname === '/api/cleanup-auth' && req.method === 'POST') {
+    try {
+      console.log('🔐 Auth cleanup requested via API');
+      
+      // Clean up auth files
+      cleanupAuth();
+      
+      // Disconnect existing socket if connected
+      if (sock) {
+        sock.end();
+        sock = null;
+      }
+      
+      // Update bot state
+      botState.connected = false;
+      botState.phoneNumber = null;
+      
+      // Broadcast the auth cleanup
+      broadcastUpdate('AUTH_CLEANUP', { 
+        message: 'Authentication cleaned up. Please restart the bot to re-authenticate.',
+        success: true 
+      });
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true, 
+        message: 'Auth cleaned up. Please restart the bot.' 
+      }));
+    } catch (error) {
+      console.error('Error cleaning up auth:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        message: 'Failed to clean up auth' 
+      }));
     }
     return;
   }

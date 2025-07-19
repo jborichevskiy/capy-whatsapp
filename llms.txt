@@ -1,0 +1,96 @@
+📁 /llms.txt
+
+# WhatsApp Bot MVP — Overview & Next Steps
+
+## ✅ Summary
+
+This project is a self-hosted WhatsApp bot built in TypeScript using Baileys, SQLite, and a lightweight scheduler. It can:
+
+- Connect to WhatsApp as a real user
+- Schedule one-time or recurring messages
+- Wake up periodically (cron-style) to send pending messages
+- Easily be extended with future message handlers
+
+All files live in a simple `src/` directory, with SQLite for persistence. No Puppeteer/Chromium needed.
+
+---
+
+## 🧱 Project Structure
+
+src/
+├── index.ts           # Entrypoint, starts bot + scheduler
+├── whatsapp.ts        # Baileys WhatsApp client, handlers scaffolded
+├── scheduler.ts       # Cron-style logic to check & send messages
+├── db.ts              # SQLite DB init + schema
+├── types.ts           # (Optional) Custom type defs
+
+data/
+├── bot.sqlite         # SQLite DB (scheduled and recurring messages)
+├── auth/              # Baileys auth files (auto-created)
+
+.env                   # For any config (not currently used)
+
+---
+
+## ✅ What Works Now
+
+- Bot starts and connects via WhatsApp Web (QR shown on first run)
+- Scheduled messages stored in SQLite and sent on time
+- Recurring weekly messages matched by weekday/hour/minute
+- Basic event handler scaffolding for future features:
+  - `handleMessage`
+  - `handleReaction`
+  - `handleChatUpdate`
+- Dev runs via `bun run src/index.ts` or `ts-node`
+
+---
+
+## ⏭️ Next Steps
+
+1. **Confirm WhatsApp connection works**
+   - Run the bot (`bun run src/index.ts`)
+   - Scan the QR code with WhatsApp → you should see the auth folder populate
+   - Send a message like “ping” to verify handler runs
+
+2. **Seed a test message**
+   - Manually insert into `scheduled_messages` table:
+     ```ts
+     import db from "./src/db";
+     db.prepare(`INSERT INTO scheduled_messages (chatId, text, datetime) VALUES (?, ?, ?)`).run(
+       "YOUR_CHAT_ID",
+       "Test from bot",
+       new Date(Date.now() + 60000).toISOString()
+     );
+     ```
+   - Or use SQLite CLI:
+     ```sql
+     INSERT INTO scheduled_messages (chatId, text, datetime)
+     VALUES ('1203XXXX@g.us', 'Test from bot', '2025-06-08T23:30:00Z');
+     ```
+
+3. **Observe the bot sending it**
+   - Message should send at the scheduled time
+   - Logs will show send confirmation
+
+4. **[Optional] Add recurring messages**
+   ```sql
+   INSERT INTO recurring_messages (chatId, text, weekday, hour, minute)
+   VALUES ('YOUR_CHAT_ID', 'Weekly check-in!', 1, 9, 0); -- Monday @ 9:00am
+
+
+bun run src/index.ts            # Start the bot
+npx tsx src/index.ts            # Alt (if using tsx instead of bun)
+sqlite3 bot.sqlite              # Inspect DB
+rm -rf auth/                    # Force re-scan QR code
+
+---
+
+## 📌 Technical Notes
+
+- ✅ Baileys is used for direct WebSocket communication with WhatsApp Web. No Puppeteer/Chromium required.
+- ✅ Auth persistence is handled via Baileys' `useMultiFileAuthState`, which saves QR session data in `/auth`.
+- ✅ `scheduled_messages` and `recurring_messages` tables are stored in a local SQLite file (`bot.sqlite`) for simplicity and portability.
+- ✅ Scheduled message loop runs every minute via `node-cron`, pulling pending jobs and sending them using `sock.sendMessage(chatId, { text })`.
+- ✅ `recurring_messages` are matched by (weekday, hour, minute) and deduplicated using a `lastSent` timestamp to avoid double sends.
+- ✅ Event stubs (`handleMessage`, `handleReaction`, `handleChatUpdate`) are wired up for future use inside `whatsapp.ts`.
+- 🧪 Development is designed to run with Bun or Node, and no Docker is required for MVP.
