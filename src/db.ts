@@ -1,7 +1,17 @@
 import Database from "better-sqlite3";
 import { ScheduledMessage, RecurringMessage, DatabaseOperations } from "./types";
 
-const db = new Database("bot.sqlite");
+import { existsSync, mkdirSync } from "fs";
+import path from "path";
+
+// Ensure data directory exists
+const dataDir = process.env.DATA_DIR || "./data";
+if (!existsSync(dataDir)) {
+  mkdirSync(dataDir, { recursive: true });
+}
+
+const dbPath = path.join(dataDir, "bot.sqlite");
+const db = new Database(dbPath);
 
 // One-time init
 db.exec(`

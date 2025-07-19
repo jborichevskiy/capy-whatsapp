@@ -557,10 +557,18 @@ wss = new WebSocketServer({
 wss.on('connection', (ws) => {
   console.log('🔌 WebSocket client connected');
   
+  // Log current bot state for debugging
+  console.log('📊 Current bot state:', {
+    connected: botState.connected,
+    phoneNumber: botState.phoneNumber,
+    groupCount: botState.groups.length
+  });
+  
   // Send current state immediately upon connection
+  const dashboardData = getDashboardData();
   ws.send(JSON.stringify({
     type: 'STATUS_UPDATE',
-    data: getDashboardData()
+    data: dashboardData
   }));
 
   ws.on('message', (message) => {
