@@ -242,7 +242,7 @@ const server = createServer(async (req, res) => {
   const url = new URL(req.url || '', `http://${req.headers.host}`);
 
   // Serve static files in production
-  if (url.pathname === '/' || url.pathname.startsWith('/assets/')) {
+  if (url.pathname === '/' || url.pathname.startsWith('/assets/') || url.pathname === '/profile.png' || url.pathname === '/favicon.svg') {
     try {
       let filePath = url.pathname === '/' ? '/index.html' : url.pathname;
       const fullPath = join(process.cwd(), 'client/dist', filePath);
