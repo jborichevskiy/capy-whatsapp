@@ -7,6 +7,11 @@ export function setupScheduler(sock: WASocket): void {
   
   // Every minute
   cron.schedule("* * * * *", async () => {
+    // Check if socket is ready
+    if (!sock || !sock.user) {
+      console.log("⏳ Socket not ready yet, skipping scheduler run");
+      return;
+    }
     const now = new Date();
     
     try {

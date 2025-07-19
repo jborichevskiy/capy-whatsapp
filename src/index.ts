@@ -13,8 +13,13 @@ async function startBot(): Promise<void> {
     console.log("📱 Initializing WhatsApp connection...");
     const sock = await createBot();
     
-    // Setup message scheduler
-    setupScheduler(sock);
+    // Wait for connection to be fully established before setting up scheduler
+    sock.ev.once("connection.update", (update) => {
+      if (update.connection === "open") {
+        // Setup message scheduler only after connection is open
+        setupScheduler(sock);
+      }
+    });
     
     console.log("✅ Bot started successfully!");
     console.log("📋 Next steps:");
