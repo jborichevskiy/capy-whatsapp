@@ -144,8 +144,13 @@ async function initializeBot() {
         botState.lastConnectionTime = new Date();
         console.log("✅ WhatsApp connected");
         
-        // Broadcast connection update
-        broadcastUpdate('CONNECTION_UPDATE', { connected: botState.connected });
+        // Get phone number if available
+        if (sock.user?.id) {
+          botState.phoneNumber = sock.user.id.split('@')[0];
+        }
+        
+        // Broadcast full status update
+        broadcastUpdate('STATUS_UPDATE', getDashboardData());
         
         // Fetch groups after connection is established
         setTimeout(updateGroups, 2000);
