@@ -94,15 +94,38 @@ In Coolify's storage settings:
 - To reset: Delete and recreate the volume
 - This will clear all auth data
 
-## Persistent Data
+## Persistent Data (CRITICAL for WhatsApp Auth)
 
 The bot stores data in:
-- `auth/` directory - WhatsApp session
+- `auth/` directory - WhatsApp session (MUST be persisted)
 - `bot.sqlite` - Message database
 
-In Coolify, set up persistent volumes for these paths:
-- `/app/auth`
-- `/app/bot.sqlite`
+### Setting up Persistent Volumes in Coolify
+
+**IMPORTANT**: Without persistent volumes, you'll need to re-scan the QR code every time the app restarts!
+
+1. In Coolify, go to your application's **Storages** tab
+2. Click **Add Storage**
+3. Create two volumes:
+
+#### Volume 1: WhatsApp Auth
+- **Name**: `whatsapp-auth`
+- **Mount Path**: `/app/auth`
+- **Type**: `volume`
+
+#### Volume 2: Database
+- **Name**: `bot-database`  
+- **Mount Path**: `/app/bot.sqlite`
+- **Type**: `volume`
+
+4. **Save** and **Redeploy** your application
+
+### Verifying Persistence
+
+After scanning the QR code once:
+1. Restart your application in Coolify
+2. The bot should reconnect without showing a new QR code
+3. Check `/api/auth-status` to verify auth exists
 
 ## Troubleshooting
 

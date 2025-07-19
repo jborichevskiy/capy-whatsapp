@@ -14,9 +14,8 @@ export const useWebSocket = () => {
     const connect = () => {
       try {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = process.env.NODE_ENV === 'development' 
-          ? `${protocol}//${window.location.host}/ws`
-          : `${protocol}//${window.location.hostname}:3000/ws`;
+        // In production, use the same host/port as the web page
+        const wsUrl = `${protocol}//${window.location.host}/ws`;
         
         ws.current = new WebSocket(wsUrl);
 
