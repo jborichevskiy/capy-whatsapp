@@ -127,9 +127,47 @@ After scanning the QR code once:
 2. The bot should reconnect without showing a new QR code
 3. Check `/api/auth-status` to verify auth exists
 
+## WebSocket Configuration for Coolify
+
+**Good news**: WebSockets work automatically in Coolify! If you're seeing connection errors:
+
+### Quick Fixes:
+
+1. **Check Application Logs**:
+   - In Coolify, go to your app → Logs
+   - Look for WebSocket connection attempts
+   - Check if requests are reaching your app
+
+2. **Verify Port Configuration**:
+   - Ensure `PORT=3000` is set in environment variables
+   - The app should listen on `0.0.0.0:3000` not `localhost:3000`
+
+3. **Reset Proxy Labels** (if needed):
+   - Go to your app's Settings
+   - Click "Reset to Coolify Default Labels"
+   - This ensures proper Traefik configuration
+
+### If WebSocket Still Fails:
+
+1. **Check Browser Console**:
+   - Open DevTools → Console
+   - Look for the WebSocket URL being attempted
+   - Should be: `wss://your-domain.com/ws`
+
+2. **Test Direct Access**:
+   ```bash
+   curl https://your-domain.com/api/auth-status
+   ```
+   If this works but WebSocket doesn't, it's a proxy issue.
+
+3. **For High Traffic** (optional):
+   - Map port directly: `3000:3000` in Coolify port settings
+   - This bypasses proxy but loses some features
+
 ## Troubleshooting
 
 1. **Build fails with pnpm errors**: The Nixpacks config specifically installs pnpm 8 to avoid version conflicts
+2. **WebSocket connection failed**: Check proxy settings and ensure WebSocket upgrade is allowed
 2. **WhatsApp disconnects**: Make sure the auth directory is persisted across deployments
 3. **Port conflicts**: Change the PORT environment variable in Coolify
 

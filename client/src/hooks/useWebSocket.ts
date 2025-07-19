@@ -17,6 +17,7 @@ export const useWebSocket = () => {
         // In production, use the same host/port as the web page
         const wsUrl = `${protocol}//${window.location.host}/ws`;
         
+        console.log('Attempting WebSocket connection to:', wsUrl);
         ws.current = new WebSocket(wsUrl);
 
         ws.current.onopen = () => {

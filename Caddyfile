@@ -1,0 +1,10 @@
+# Caddy configuration for WebSocket support
+# This file is for reference if Coolify uses Caddy
+
+{$APP_DOMAIN} {
+    reverse_proxy * localhost:{$PORT} {
+        # WebSocket support
+        header_up Upgrade {http.request.header.Upgrade}
+        header_up Connection {http.request.header.Connection}
+    }
+}

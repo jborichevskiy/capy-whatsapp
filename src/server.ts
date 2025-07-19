@@ -585,11 +585,13 @@ wss.on('connection', (ws) => {
   });
 });
 
-const PORT = 3000;
-server.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+const HOST = '0.0.0.0'; // Bind to all interfaces for container compatibility
+
+server.listen(Number(PORT), HOST, () => {
   console.log("🌐 Server starting...");
-  console.log(`📱 Dashboard: http://localhost:${PORT}`);
-  console.log(`🔌 WebSocket: ws://localhost:${PORT}/ws`);
+  console.log(`📱 Dashboard: http://${HOST}:${PORT}`);
+  console.log(`🔌 WebSocket: ws://${HOST}:${PORT}/ws`);
   console.log("🤖 Initializing WhatsApp bot...");
 });
 
