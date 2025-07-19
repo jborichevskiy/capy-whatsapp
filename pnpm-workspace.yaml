@@ -1,0 +1,5 @@
+onlyBuiltDependencies:
+  - '@whiskeysockets/baileys'
+  - better-sqlite3
+  - esbuild
+  - protobufjs

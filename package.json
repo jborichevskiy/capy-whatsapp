@@ -5,6 +5,7 @@
   "main": "src/web-node.ts",
   "scripts": {
     "start": "tsx src/server.ts",
+    "start:prod": "node dist/server.js",
     "dev": "concurrently \"tsx --watch src/server.ts\" \"cd client && vite\"",
     "dev:server": "tsx --watch src/server.ts",
     "dev:client": "cd client && vite --host",
