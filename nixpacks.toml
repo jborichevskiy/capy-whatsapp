@@ -1,0 +1,23 @@
+# Nixpacks configuration for Coolify deployment
+
+[phases.setup]
+# Include build essentials for native dependencies
+aptPkgs = ["python3", "make", "g++", "build-essential"]
+
+[phases.install]
+# Install dependencies with native compilation support
+cmds = ["pnpm install --frozen-lockfile"]
+
+[phases.build]
+# Build the application
+cmds = [
+    "pnpm run build:client",
+    "pnpm run build:server"
+]
+
+[start]
+# Run the production server
+cmd = "node dist/server.js"
+
+[variables]
+NODE_ENV = "production"

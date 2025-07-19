@@ -14,10 +14,12 @@ async function startBot(): Promise<void> {
     const sock = await createBot();
     
     // Wait for connection to be fully established before setting up scheduler
-    sock.ev.once("connection.update", (update) => {
+    sock.ev.on("connection.update", (update) => {
       if (update.connection === "open") {
         // Setup message scheduler only after connection is open
         setupScheduler(sock);
+        // Remove the listener after first successful connection
+        sock.ev.removeAllListeners("connection.update");
       }
     });
     

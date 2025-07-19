@@ -9,6 +9,7 @@ import { createBot, hasExistingAuth, cleanupAuth } from "./whatsapp";
 import { setupScheduler } from "./scheduler";
 import { dbOps } from "./db";
 import { getPendingMessages, getAllRecurringMessages, formatChatId } from "./utils";
+import { authManager } from "./auth-manager";
 
 // Global state for the bot
 let botState = {
@@ -115,6 +116,12 @@ async function updateGroups() {
 async function initializeBot() {
   try {
     console.log("🚀 Initializing WhatsApp Bot...");
+    
+    // Check for CLEAR_AUTH_ON_STARTUP environment variable
+    if (process.env.CLEAR_AUTH_ON_STARTUP === 'true') {
+      console.log("🔄 CLEAR_AUTH_ON_STARTUP is set - clearing authentication");
+      cleanupAuth();
+    }
     
     // Check if we have existing auth
     if (hasExistingAuth()) {
@@ -450,6 +457,24 @@ const server = createServer(async (req, res) => {
   // Clean up auth endpoint
   if (url.pathname === '/api/cleanup-auth' && req.method === 'POST') {
     try {
+      // Check for admin token if configured
+      const adminToken = process.env.ADMIN_TOKEN;
+      if (adminToken) {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+          res.writeHead(401, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Authorization required' }));
+          return;
+        }
+        
+        const token = authHeader.substring(7);
+        if (token !== adminToken) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: false, message: 'Invalid token' }));
+          return;
+        }
+      }
+      
       console.log('🔐 Auth cleanup requested via API');
       
       // Clean up auth files
@@ -482,6 +507,32 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({ 
         success: false, 
         message: 'Failed to clean up auth' 
+      }));
+    }
+    return;
+  }
+
+  // Auth status endpoint
+  if (url.pathname === '/api/auth-status' && req.method === 'GET') {
+    try {
+      const status = authManager.getAuthStatus();
+      const hasAuth = hasExistingAuth();
+      
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: true,
+        hasAuth,
+        authExists: status.exists,
+        lastCleared: status.lastCleared,
+        connected: botState.connected,
+        phoneNumber: botState.phoneNumber
+      }));
+    } catch (error) {
+      console.error('Error getting auth status:', error);
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ 
+        success: false, 
+        message: 'Failed to get auth status' 
       }));
     }
     return;

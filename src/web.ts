@@ -279,9 +279,9 @@ const dashboardHTML = `
 </html>`;
 
 // Bun server
-const server = Bun.serve({
+const server = (Bun as any).serve({
   port: 3000,
-  async fetch(req) {
+  async fetch(req: any) {
     const url = new URL(req.url);
     
     // CORS headers

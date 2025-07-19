@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  foodexchange-bot:
+    # Using Nixpacks image for consistency with Coolify
+    image: ghcr.io/railwayapp/nixpacks:ubuntu-1704311346
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ./auth:/app/auth
+      - ./bot.sqlite:/app/bot.sqlite
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    command: |
+      sh -c "
+        # Install Node 20 and pnpm
+        apt-get update && apt-get install -y curl
+        curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+        apt-get install -y nodejs
+        npm install -g pnpm@8
+        
+        # Install dependencies
+        pnpm install --frozen-lockfile
+        
+        # Build the app
+        pnpm run build:client
+        pnpm run build:server
+        
+        # Start the production server
+        node dist/server.js
+      "
+    restart: unless-stopped
+
+  # Alternative: Simple Node.js container for development
+  foodexchange-bot-dev:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - .:/app
+      - ./auth:/app/auth
+      - ./bot.sqlite:/app/bot.sqlite
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+    command: |
+      sh -c "
+        # Install pnpm
+        npm install -g pnpm@8
+        
+        # Install dependencies
+        pnpm install
+        
+        # Run in development mode
+        pnpm dev
+      "
+    restart: unless-stopped
