@@ -2,14 +2,25 @@ import cron from "node-cron";
 import { dbOps } from "./db";
 import { WASocket } from "@whiskeysockets/baileys";
 
+let schedulerStartTime: Date | null = null;
+
 export function setupScheduler(sock: WASocket): void {
   console.log("🕐 Setting up message scheduler (runs every minute)");
+  
+  // Record when scheduler starts to avoid sending messages from startup minute
+  schedulerStartTime = new Date();
   
   // Every minute
   cron.schedule("* * * * *", async () => {
     // Check if socket is ready
     if (!sock || !sock.user) {
       console.log("⏳ Socket not ready yet, skipping scheduler run");
+      return;
+    }
+    
+    // Skip the first minute after startup to avoid duplicate sends
+    if (schedulerStartTime && new Date().getTime() - schedulerStartTime.getTime() < 60000) {
+      console.log("⏳ Skipping scheduler run in first minute after startup");
       return;
     }
     const now = new Date();
