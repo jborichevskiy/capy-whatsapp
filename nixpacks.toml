@@ -1,16 +1,7 @@
 # Nixpacks configuration for Coolify deployment
-# This avoids Docker complexity and uses Coolify's native buildpack support
-
-[phases.setup]
-# Use Node 20 and install pnpm
-nixPkgs = ["nodejs_20", "pnpm-8"]
-
-[phases.install]
-# Install dependencies using pnpm
-cmds = ["pnpm install --frozen-lockfile"]
 
 [phases.build]
-# Build the client and compile TypeScript
+# Custom build commands after dependencies are installed
 cmds = [
     "pnpm run build:client",
     "pnpm run build:server"
@@ -19,7 +10,3 @@ cmds = [
 [start]
 # Run the production server
 cmd = "node dist/server.js"
-
-[variables]
-# Set production environment
-NODE_ENV = "production"
