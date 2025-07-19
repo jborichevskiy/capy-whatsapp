@@ -1,2 +1,5 @@
 - make clear that it's MT for time scheduling
 - select specific day of week & time
+- make host pull from .env
+
+- deploy on regen coolify
