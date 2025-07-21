@@ -1,13 +1,12 @@
 import makeWASocket, { 
   useMultiFileAuthState, 
-  ConnectionState, 
   DisconnectReason,
-  WASocket,
-  makeCacheableSignalKeyStore
+  WASocket
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import * as qrcode from "qrcode-terminal";
 import { existsSync, rmSync } from "fs";
+import * as https from "https";
 
 // Message handlers
 export async function handleMessage(msg: any): Promise<void> {
@@ -49,12 +48,48 @@ export function cleanupAuth(): void {
   }
 }
 
+// Custom logger for better debugging
+const customLogger = {
+  level: 'info' as const,
+  info: (...args: any[]) => console.log('📘 INFO:', ...args),
+  error: (...args: any[]) => console.error('❌ ERROR:', ...args),
+  warn: (...args: any[]) => console.warn('⚠️ WARN:', ...args),
+  debug: (...args: any[]) => {
+    if (process.env.DEBUG === 'true') {
+      console.log('🐛 DEBUG:', ...args);
+    }
+  },
+  trace: (...args: any[]) => {
+    if (process.env.DEBUG === 'true') {
+      console.log('🔍 TRACE:', ...args);
+    }
+  },
+  child: () => customLogger,
+};
+
 export async function createBot(): Promise<WASocket> {
   const { state, saveCreds } = await useMultiFileAuthState("auth");
   
   const sock = makeWASocket({
     auth: state,
-    // Removed deprecated printQRInTerminal option
+    // Enhanced timeout configuration
+    connectTimeoutMs: 60000, // Increase to 60 seconds
+    defaultQueryTimeoutMs: 120000, // Increase to 2 minutes
+    keepAliveIntervalMs: 25000, // Slightly lower than default
+    retryRequestDelayMs: 1000, // Increase delay between retries
+    maxMsgRetryCount: 10, // Increase retry count
+    fireInitQueries: true, // Keep this enabled for now
+    logger: customLogger, // Use custom logger
+    // Network agent configuration
+    agent: new https.Agent({
+      keepAlive: true,
+      keepAliveMsecs: 10000,
+      timeout: 120000, // 2 minute timeout for socket
+    }),
+    fetchAgent: new https.Agent({
+      keepAlive: true,
+      timeout: 120000,
+    }),
   });
 
   // Save credentials when updated
