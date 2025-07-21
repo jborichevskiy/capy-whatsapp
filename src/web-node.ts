@@ -17,8 +17,9 @@ let sock: any = null;
 
 // Function to fetch and update groups
 async function updateGroups() {
-  if (!sock || !botState.connected) {
-    console.log("❌ Bot not connected, cannot fetch groups");
+  // Check if socket exists and has a user (indicating it's authenticated)
+  if (!sock || !sock.user) {
+    console.log("❌ Bot not ready, cannot fetch groups (socket:", !!sock, "user:", !!sock?.user, ")");
     return;
   }
 

@@ -55,8 +55,9 @@ function getDashboardData() {
 
 // Function to fetch and update groups
 async function updateGroups() {
-  if (!sock || !botState.connected) {
-    console.log("❌ Bot not connected, cannot fetch groups");
+  // Check if socket exists and has a user (indicating it's authenticated)
+  if (!sock || !sock.user) {
+    console.log("❌ Bot not ready, cannot fetch groups (socket:", !!sock, "user:", !!sock?.user, ")");
     return;
   }
 
@@ -138,7 +139,19 @@ async function initializeBot() {
     // Listen for connection updates
     sock.ev.on("connection.update", async (update: any) => {
       const { connection, lastDisconnect } = update;
-      botState.connected = connection === "open";
+      
+      // Log connection state changes for debugging
+      if (connection) {
+        console.log(`🔌 Connection state changed to: ${connection}`);
+      }
+      
+      // Only set connected to false if we're truly closed or logged out
+      if (connection === "open") {
+        botState.connected = true;
+      } else if (connection === "close") {
+        botState.connected = false;
+      }
+      // For other states like "connecting", keep the current connection state
       
       if (botState.connected) {
         botState.lastConnectionTime = new Date();
