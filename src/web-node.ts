@@ -3,6 +3,7 @@ import { createBot } from "./whatsapp";
 import { setupScheduler } from "./scheduler";
 import { dbOps } from "./db";
 import { getPendingMessages, getAllRecurringMessages, formatChatId } from "./utils";
+import { setCurrentSocket } from "./socket-manager";
 
 // Global state for the web UI
 let botState = {
@@ -106,9 +107,10 @@ async function initializeBot() {
   try {
     console.log("🚀 Initializing WhatsApp Bot...");
     sock = await createBot();
+    setCurrentSocket(sock);
     
     // Setup scheduler
-    setupScheduler(sock);
+    setupScheduler();
     
     // Listen for connection updates
     sock.ev.on("connection.update", async (update: any) => {

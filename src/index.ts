@@ -1,6 +1,7 @@
 import { createBot } from "./whatsapp";
 import { setupScheduler } from "./scheduler";
 import { dbOps } from "./db";
+import { setCurrentSocket } from "./socket-manager";
 
 async function startBot(): Promise<void> {
   console.log("🚀 Starting WhatsApp Bot MVP...");
@@ -12,12 +13,13 @@ async function startBot(): Promise<void> {
     // Initialize WhatsApp bot
     console.log("📱 Initializing WhatsApp connection...");
     const sock = await createBot();
+    setCurrentSocket(sock);
     
     // Wait for connection to be fully established before setting up scheduler
     sock.ev.on("connection.update", (update) => {
       if (update.connection === "open") {
         // Setup message scheduler only after connection is open
-        setupScheduler(sock);
+        setupScheduler();
         // Remove the listener after first successful connection
         sock.ev.removeAllListeners("connection.update");
       }
