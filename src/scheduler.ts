@@ -1,10 +1,10 @@
 import cron from "node-cron";
 import { dbOps } from "./db";
-import { WASocket } from "@whiskeysockets/baileys";
+import { getCurrentSocket } from "./socket-manager";
 
 let schedulerStartTime: Date | null = null;
 
-export function setupScheduler(sock: WASocket): void {
+export function setupScheduler(): void {
   console.log("🕐 Setting up message scheduler (runs every minute)");
   
   // Record when scheduler starts to avoid sending messages from startup minute
@@ -12,6 +12,8 @@ export function setupScheduler(sock: WASocket): void {
   
   // Every minute
   cron.schedule("* * * * *", async () => {
+    const sock = getCurrentSocket();
+    
     // Check if socket is ready
     if (!sock || !sock.user) {
       console.log("⏳ Socket not ready yet, skipping scheduler run");
@@ -31,12 +33,20 @@ export function setupScheduler(sock: WASocket): void {
       
       for (const msg of scheduledMessages) {
         try {
-          console.log(`📤 Sending scheduled message`);
+          console.log(`📤 Sending scheduled message to ${msg.chatId}: "${msg.text}"`);
           await sock.sendMessage(msg.chatId, { text: msg.text });
           dbOps.deleteScheduledMessage(msg.id!);
           console.log(`✅ Scheduled message sent and removed (ID: ${msg.id})`);
-        } catch (error) {
+        } catch (error: any) {
           console.error(`❌ Failed to send scheduled message (ID: ${msg.id}):`, error);
+          // If connection is closed, log more details
+          if (error?.message?.includes('Connection Closed')) {
+            console.log('🔌 Socket state:', { 
+              hasSocket: !!sock, 
+              hasUser: !!sock?.user,
+              userId: sock?.user?.id 
+            });
+          }
         }
       }
 

@@ -10,6 +10,7 @@ import { setupScheduler } from "./scheduler";
 import { dbOps } from "./db";
 import { getPendingMessages, getAllRecurringMessages, formatChatId } from "./utils";
 import { authManager } from "./auth-manager";
+import { setCurrentSocket } from "./socket-manager";
 
 // Global state for the bot
 let botState = {
@@ -115,6 +116,7 @@ async function updateGroups() {
 
 // Heartbeat interval reference
 let heartbeatInterval: NodeJS.Timeout | null = null;
+let schedulerStartTime: Date | null = null;
 
 // Start the bot
 async function initializeBot() {
@@ -135,34 +137,35 @@ async function initializeBot() {
     }
     
     sock = await createBot();
+    setCurrentSocket(sock);
     
-    // Setup scheduler
-    setupScheduler(sock);
+    // Setup scheduler (only on first initialization)
+    if (!schedulerStartTime) {
+      setupScheduler();
+      schedulerStartTime = new Date();
+    }
     
     // Listen for connection updates
     sock.ev.on("connection.update", async (update: any) => {
-      const { connection, lastDisconnect } = update;
+      const { connection, lastDisconnect, qr } = update;
+      
+      console.log(`🔌 Server connection update:`, { connection, hasQR: !!qr, hasLastDisconnect: !!lastDisconnect });
       
       // Log connection state changes for debugging
       if (connection) {
         console.log(`🔌 Connection state changed to: ${connection}`);
       }
       
-      // Only set connected to false if we're truly closed or logged out
+      // Handle connection state changes
       if (connection === "open") {
+        console.log("✅ Bot connection handler: WhatsApp connected!");
         botState.connected = true;
-      } else if (connection === "close") {
-        botState.connected = false;
-      }
-      // For other states like "connecting", keep the current connection state
-      
-      if (botState.connected) {
         botState.lastConnectionTime = new Date();
-        console.log("✅ WhatsApp connected");
         
         // Get phone number if available
         if (sock.user?.id) {
           botState.phoneNumber = sock.user.id.split('@')[0];
+          console.log(`📱 Phone number: ${botState.phoneNumber}`);
         }
         
         // Clear any existing heartbeat
@@ -224,7 +227,10 @@ async function initializeBot() {
         
         // Fetch groups after connection is established
         setTimeout(updateGroups, 2000);
-      } else {
+        
+      } else if (connection === "close") {
+        botState.connected = false;
+        
         // Clear heartbeat on disconnect
         if (heartbeatInterval) {
           clearInterval(heartbeatInterval);
@@ -565,6 +571,7 @@ const server = createServer(async (req, res) => {
       if (sock) {
         sock.end();
         sock = null;
+        setCurrentSocket(null);
       }
       
       // Update bot state
@@ -637,7 +644,9 @@ wss.on('connection', (ws) => {
   console.log('📊 Current bot state:', {
     connected: botState.connected,
     phoneNumber: botState.phoneNumber,
-    groupCount: botState.groups.length
+    groupCount: botState.groups.length,
+    sock: !!sock,
+    sockUser: !!sock?.user
   });
   
   // Send current state immediately upon connection

@@ -148,11 +148,9 @@ export async function createBot(): Promise<WASocket> {
           process.exit(1);
         }
         
-        // For other disconnection reasons, wait before reconnecting
-        setTimeout(() => {
-          console.log("🔄 Attempting reconnection after delay...");
-          createBot();
-        }, 5000); // Wait 5 seconds before reconnecting
+        // For other disconnection reasons, restart the process to ensure clean reconnection
+        console.log("🔄 Forcing process restart for clean reconnection...");
+        process.exit(1);
       } else {
         console.log("❌ Bot logged out. Restart the bot to reconnect.");
       }
