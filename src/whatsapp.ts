@@ -144,11 +144,15 @@ export async function createBot(): Promise<WASocket> {
         // Check for timeout errors specifically
         if (statusCode === DisconnectReason.timedOut || statusCode === 408) {
           console.log("⏱️  Connection timed out - forcing process restart for fresh connection");
-          console.log("💡 Coolify will automatically restart the container");
+          console.log("💡 Glif will automatically restart the container");
           process.exit(1);
         }
         
-        createBot();
+        // For other disconnection reasons, wait before reconnecting
+        setTimeout(() => {
+          console.log("🔄 Attempting reconnection after delay...");
+          createBot();
+        }, 5000); // Wait 5 seconds before reconnecting
       } else {
         console.log("❌ Bot logged out. Restart the bot to reconnect.");
       }

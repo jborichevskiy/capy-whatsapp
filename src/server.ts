@@ -113,6 +113,9 @@ async function updateGroups() {
   }
 }
 
+// Heartbeat interval reference
+let heartbeatInterval: NodeJS.Timeout | null = null;
+
 // Start the bot
 async function initializeBot() {
   try {
@@ -162,12 +165,72 @@ async function initializeBot() {
           botState.phoneNumber = sock.user.id.split('@')[0];
         }
         
+        // Clear any existing heartbeat
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval);
+        }
+        
+        // Set up heartbeat to check connection every 30 seconds
+        heartbeatInterval = setInterval(async () => {
+          try {
+            // Try to get user info as a simple health check
+            if (!sock || !sock.user) {
+              console.log("💔 Heartbeat check - no socket or user, reconnecting...");
+              botState.connected = false;
+              broadcastUpdate('CONNECTION_UPDATE', { connected: false });
+              // Force reconnect
+              if (sock) {
+                sock.end();
+              }
+              setTimeout(() => initializeBot(), 5000);
+              return;
+            }
+            
+            // Try to query our own profile as a connection test
+            try {
+              await sock.query({
+                tag: 'iq',
+                attrs: {
+                  to: '@s.whatsapp.net',
+                  type: 'get',
+                  xmlns: 'status',
+                },
+                content: [
+                  {
+                    tag: 'status',
+                    attrs: {},
+                  }
+                ]
+              });
+              console.log("💓 Heartbeat check - connection alive");
+            } catch (queryError: any) {
+              console.log("💔 Heartbeat query failed:", queryError?.message || queryError);
+              botState.connected = false;
+              broadcastUpdate('CONNECTION_UPDATE', { connected: false });
+              
+              // Force restart on connection errors
+              console.log("🔄 Forcing process restart due to connection failure");
+              process.exit(1);
+            }
+          } catch (error) {
+            console.log("💔 Heartbeat check failed:", error);
+            botState.connected = false;
+            broadcastUpdate('CONNECTION_UPDATE', { connected: false });
+          }
+        }, 30000); // Check every 30 seconds
+        
         // Broadcast full status update
         broadcastUpdate('STATUS_UPDATE', getDashboardData());
         
         // Fetch groups after connection is established
         setTimeout(updateGroups, 2000);
       } else {
+        // Clear heartbeat on disconnect
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval);
+          heartbeatInterval = null;
+        }
+        
         // Check if it's an auth failure
         const error = lastDisconnect?.error as any;
         const statusCode = error?.output?.statusCode;
