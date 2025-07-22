@@ -31,7 +31,7 @@ export function setupScheduler(sock: WASocket): void {
       
       for (const msg of scheduledMessages) {
         try {
-          console.log(`📤 Sending scheduled message to ${msg.chatId}: "${msg.text}"`);
+          console.log(`📤 Sending scheduled message`);
           await sock.sendMessage(msg.chatId, { text: msg.text });
           dbOps.deleteScheduledMessage(msg.id!);
           console.log(`✅ Scheduled message sent and removed (ID: ${msg.id})`);
@@ -49,7 +49,7 @@ export function setupScheduler(sock: WASocket): void {
 
       for (const msg of recurringMessages) {
         try {
-          console.log(`🔄 Sending recurring message to ${msg.chatId}: "${msg.text}"`);
+          console.log(`🔄 Sending recurring message`);
           await sock.sendMessage(msg.chatId, { text: msg.text });
           dbOps.updateRecurringMessageLastSent(msg.id!, now.toISOString());
           console.log(`✅ Recurring message sent (ID: ${msg.id})`);

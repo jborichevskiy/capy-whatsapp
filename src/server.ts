@@ -83,7 +83,7 @@ async function updateGroups() {
             owner: groupMetadata.owner || '',
             creation: groupMetadata.creation || null
           });
-          console.log(`✅ Added group: ${groupMetadata.subject || group.subject} (${groupMetadata.participants?.length || 0} members)`);
+          console.log(`✅ Added group`);
         } catch (metadataError) {
           console.warn(`⚠️ Could not fetch metadata for group ${groupId}:`, metadataError instanceof Error ? metadataError.message : String(metadataError));
           groups.push({
@@ -94,7 +94,7 @@ async function updateGroups() {
             owner: group.owner || '',
             creation: group.creation || null
           });
-          console.log(`⚠️ Added group (basic info): ${group.subject || 'Unknown Group'}`);
+          console.log(`⚠️ Added group (basic info)`);
         }
       }
     } catch (participatingError) {

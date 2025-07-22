@@ -14,23 +14,23 @@ export async function handleMessage(msg: any): Promise<void> {
   const fromUser = msg.key.remoteJid;
   
   if (messageText && fromUser) {
-    console.log(`📨 Message from ${fromUser}: ${messageText}`);
+    console.log(`📨 Message received`);
     
     // Simple ping/pong for testing
     if (messageText.toLowerCase() === 'ping') {
       // We'll handle responses in the main bot logic if needed
-      console.log("🏓 Ping received - could respond with pong");
+      console.log("🏓 Ping command detected");
     }
   }
 }
 
 export async function handleReaction(reaction: any): Promise<void> {
-  console.log("👍 Reaction received:", reaction);
+  console.log("👍 Reaction received");
   // Add reaction handling logic here
 }
 
 export async function handleChatUpdate(update: any): Promise<void> {
-  console.log("💬 Chat update:", update);
+  console.log("💬 Chat update received");
   // Add chat update handling logic here
 }
 

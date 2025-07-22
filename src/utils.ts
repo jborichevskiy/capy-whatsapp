@@ -18,8 +18,6 @@ export function scheduleMessage(
   });
   
   console.log(`📅 Scheduled message (ID: ${id}) for ${dateStr}`);
-  console.log(`   To: ${chatId}`);
-  console.log(`   Text: "${text}"`);
   
   return id;
 }
@@ -48,8 +46,6 @@ export function scheduleRecurringMessage(
   const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   console.log(`🔄 Scheduled recurring message (ID: ${id})`);
   console.log(`   Every ${weekdays[weekday]} at ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`);
-  console.log(`   To: ${chatId}`);
-  console.log(`   Text: "${text}"`);
   
   return id;
 }
