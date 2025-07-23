@@ -1,6 +1,84 @@
-# WhatsApp Bot MVP
+# Capy 🦫
 
-A self-hosted WhatsApp bot built with TypeScript, Baileys, and SQLite that can schedule and send messages automatically.
+**A WhatsApp bot for Boulder's weekly food exchange, built almost entirely by Claude.** Every week, Capy asks one simple question: "Who's in this week?" That's it. No AI, no analytics, no fancy features – just a reliable capybara with a pink beret making sure the food swap happens. Built as part of exploring [Local Community Tech Stacks](https://jon.bo/posts/local-community-tech-stack-capy/): interoperable, vibe-coded, self-hostable apps for our communities.
+
+---
+
+<details>
+<summary><strong>📚 Technical Architecture for LLMs</strong> (expand for implementation details)</summary>
+
+## System Architecture
+
+This WhatsApp bot was architected and implemented entirely through conversational programming with Claude. Built for simplicity and reliability over features.
+
+### Core Components
+
+#### 1. WhatsApp Client Layer (`src/whatsapp.ts`)
+- Uses Baileys library for WhatsApp Web protocol implementation
+- Handles connection management, QR code generation, and auth persistence
+- Event-driven architecture for message handling
+- Implements reconnection logic with exponential backoff
+- Message queue system for reliable delivery
+
+#### 2. Scheduling Engine (`src/scheduler.ts`)
+- Cron-based scheduling using node-cron
+- Supports one-time scheduled messages and weekly recurring messages
+- Runs checks every minute for pending messages
+- Handles timezone considerations (currently uses system time)
+- Automatic cleanup of sent one-time messages
+
+#### 3. Database Layer (`src/db.ts`)
+- SQLite for local persistence (file: `bot.sqlite`)
+- Tables:
+  - `scheduled_messages`: One-time messages with timestamps
+  - `recurring_messages`: Weekly recurring messages with day/time
+  - `groups`: WhatsApp group information cache
+- Prepared statements for performance and security
+- Auto-initialization on first run
+
+#### 4. Web Dashboard (`src/web.ts`)
+- Bun-powered HTTP server on port 3000
+- Real-time status updates via polling (5-second intervals)
+- No authentication (designed for local/trusted network use)
+- Responsive UI built with vanilla HTML/CSS/JS
+- Endpoints:
+  - `/`: Main dashboard
+  - `/api/status`: JSON API for bot status
+
+### Message Flow
+
+1. **Incoming Messages**: WhatsApp → Baileys → Event Handler → Message Processor
+2. **Scheduled Messages**: Cron Trigger → Database Query → Message Queue → WhatsApp
+3. **Web Dashboard**: Browser → HTTP Server → Database/Bot State → JSON Response
+
+### Key Design Decisions
+
+- **TypeScript**: Full type safety across the codebase
+- **SQLite**: Zero-config database for simplicity
+- **Baileys**: Most mature Node.js WhatsApp library
+- **Modular Structure**: Each file has a single responsibility
+- **Event-Driven**: Loose coupling between components
+- **Graceful Shutdown**: Proper cleanup on process termination
+
+### Extension Points
+
+- `handleMessage()`: Add custom command handlers
+- `handleReaction()`: Process emoji reactions
+- `handleChatUpdate()`: Track group changes
+- Database schema is extensible for new features
+- Web dashboard can be extended with new endpoints
+
+### Security Considerations
+
+- Auth credentials stored locally in `auth/` directory
+- No external API dependencies (fully self-contained)
+- Web dashboard has no authentication (use firewall/VPN)
+- Database uses prepared statements
+- No user input is executed as code
+
+</details>
+
+---
 
 ## 🚀 Quick Start
 
@@ -13,8 +91,8 @@ A self-hosted WhatsApp bot built with TypeScript, Baileys, and SQLite that can s
 
 1. **Clone and install dependencies:**
    ```bash
-   git clone <your-repo>
-   cd whatsapp-bot-mvp
+   git clone https://github.com/jonbo/capy-whatsapp
+   cd capy-whatsapp
    npm install
    ```
 
@@ -120,10 +198,10 @@ data/
 
 ## 🧪 Development
 
-### Available Scripts
+### Running Capy
 
 ```bash
-npm start          # Start the bot (CLI mode)
+npm start          # Start Capy (CLI mode)
 npm run dev        # Start with file watching
 npm run build      # Compile TypeScript
 npm run bun:start  # Start with bun (CLI mode)
@@ -131,26 +209,9 @@ npm run bun:web    # Start with web dashboard
 npm run test-util  # Run test utilities
 ```
 
-### Adding Message Handlers
+### Customizing Capy
 
-Edit `src/whatsapp.ts` to customize message handling:
-
-```typescript
-export async function handleMessage(msg: any): Promise<void> {
-  const messageText = msg.message?.conversation;
-  const fromUser = msg.key.remoteJid;
-  
-  // Add your custom logic here
-  if (messageText === 'hello') {
-    // Respond to the message
-    // sock.sendMessage(fromUser, { text: 'Hi there!' });
-  }
-}
-```
-
-### Adding Custom Commands
-
-The test utility can be extended in `src/test.ts` for additional functionality.
+While Capy is intentionally simple, you can modify the weekly message or add new handlers in `src/whatsapp.ts`. The test utility in `src/test.ts` helps with scheduling and testing.
 
 ## 🔧 Configuration
 
@@ -158,12 +219,13 @@ The test utility can be extended in `src/test.ts` for additional functionality.
 - **Auth**: Stored in `auth/` directory (created automatically)
 - **Scheduling**: Runs every minute by default (configurable in `scheduler.ts`)
 
-## 📝 Notes
+## 📝 Philosophy & Notes
 
-- **WhatsApp ToS**: This bot connects as a regular WhatsApp user. Follow WhatsApp's Terms of Service.
-- **Rate Limits**: Be mindful of message frequency to avoid temporary restrictions.
-- **Persistence**: Auth state and messages persist across restarts.
-- **Security**: Keep your `auth/` directory private and secure.
+- **Community First**: Built for a specific community need, not for scale
+- **Simple by Design**: Does one thing well – asks who's cooking each week
+- **Self-Hostable**: Runs on a donated PC in a Boulder coworking space
+- **WhatsApp Constraints**: Uses unofficial API since WhatsApp doesn't support community bots
+- **Operating Cost**: ~$8/month for the phone number (US Mobile eSIM)
 
 ## 🐛 Troubleshooting
 
@@ -180,11 +242,22 @@ The test utility can be extended in `src/test.ts` for additional functionality.
 - Delete `bot.sqlite` to reset the database (you'll lose scheduled messages)
 - Check file permissions in the project directory
 
-## 🔮 Future Enhancements
+## 🌱 Part of Local Community Tech Stacks
 
-- Web dashboard for message management
-- Support for media messages (images, documents)
-- Message templates and variables
-- Integration with external APIs
-- Group management features
-- Analytics and reporting 
+Capy is an experiment in community-owned technology. Built with AI but designed for humans. No venture funding, no growth metrics, no surveillance capitalism – just a bot that helps friends share food.
+
+### Resources
+- [Blog post: Building Capy](https://jon.bo/posts/local-community-tech-stack-capy/)
+- [GitHub: This repo](https://github.com/jonbo/foodexchange-bot)
+- [Home-Cooked Software](https://maggieappleton.com/home-cooked-software) by Maggie Appleton
+- [Build for Here](https://unforced.substack.com/p/build-for-here) by Aaron Gabriel Neyer
+
+### Built With
+- 🤖 ~$30 of Claude API credits
+- 🦫 One capybara with a pink beret
+- ☕ Several debugging sessions
+- 💚 Community vibes
+
+---
+
+*Capy asks "Who's in this week?" so you don't have to.* 
