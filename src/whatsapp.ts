@@ -5,7 +5,7 @@ import makeWASocket, {
 } from "@whiskeysockets/baileys";
 import { Boom } from "@hapi/boom";
 import * as qrcode from "qrcode-terminal";
-import { existsSync, rmSync } from "fs";
+import { existsSync, rmSync, readdirSync } from "fs";
 import * as https from "https";
 
 // Message handlers
@@ -42,9 +42,48 @@ export function hasExistingAuth(): boolean {
 // Function to clean up auth files
 export function cleanupAuth(): void {
   if (existsSync("auth")) {
-    console.log("🗑️  Cleaning up old authentication files...");
-    rmSync("auth", { recursive: true, force: true });
-    console.log("✅ Auth files cleaned up successfully");
+    console.log("🗑️  Cleaning up authentication files in persistent volume...");
+    try {
+      let filesRemoved = 0;
+      
+      // Remove creds.json if it exists
+      const credsPath = "auth/creds.json";
+      if (existsSync(credsPath)) {
+        rmSync(credsPath, { force: true });
+        filesRemoved++;
+        console.log("✅ Removed creds.json");
+      }
+      
+      // Remove all auth-related files
+      const files = readdirSync("auth");
+      files.forEach((file: string) => {
+        // Remove all WhatsApp auth files
+        if (file.startsWith("app-state-sync-key-") || 
+            file.startsWith("pre-key-") || 
+            file.startsWith("sender-key-") || 
+            file.startsWith("session-") ||
+            file.startsWith("app-state-sync-version") ||
+            file === "creds.json") {
+          try {
+            rmSync(`auth/${file}`, { force: true });
+            filesRemoved++;
+          } catch (e) {
+            console.log(`⚠️  Could not remove ${file}: ${e}`);
+          }
+        }
+      });
+      
+      if (filesRemoved > 0) {
+        console.log(`✅ Cleaned up ${filesRemoved} authentication files`);
+      } else {
+        console.log("ℹ️  No authentication files found to clean");
+      }
+    } catch (error) {
+      console.error("❌ Failed to clean auth files:", error);
+      console.log("💡 You may need to manually clear the auth volume");
+    }
+  } else {
+    console.log("ℹ️  No auth directory found");
   }
 }
 
